@@ -1,0 +1,133 @@
+# Docker Compose para CoreApi - Sistema SAAS Multi-tenant Brasileiro
+# Configuração para desenvolvimento e produção com Dokploy
+version: '3.8'
+
+services:
+  # Database PostgreSQL
+  postgres:
+    image: postgres:16-alpine
+    container_name: farmacia_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: farmacia_saas_prod
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev123456}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=pt_BR.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    networks:
+      - farmacia_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d farmacia_saas_prod"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # CoreApi Application
+  coreapi:
+    build:
+      context: ./CoreApi
+      dockerfile: Dockerfile
+    container_name: farmacia_coreapi
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Database
+      - ConnectionStrings__DefaultConnection=Server=postgres;Port=5432;Database=farmacia_saas_prod;User Id=admin;Password=${DB_PASSWORD:-dev123456};
+      
+      # Security
+      - JWT__Secret=${JWT_SECRET:-sua-chave-secreta-muito-segura-aqui-com-pelo-menos-32-caracteres}
+      - JWT__Issuer=CoreAPIBrasil
+      - JWT__Audience=FarmaciaClientsBrasil
+      
+      # Multi-tenant
+      - MultiTenant__DefaultTenant=demo
+      - MultiTenant__TenantDomain=${DOMAIN:-farmacia-dev.diegolima.dev}
+      - MultiTenant__AdminDomain=admin.${DOMAIN:-farmacia-dev.diegolima.dev}
+      
+      # Rate Limiting
+      - RateLimit__MaxRequests=100
+      - RateLimit__WindowMinutes=1
+      
+      # CORS
+      - CORS__AllowedOrigins__0=https://*.${DOMAIN:-farmacia-dev.diegolima.dev}
+      - CORS__AllowedOrigins__1=http://localhost:3000
+      - CORS__AllowedOrigins__2=http://localhost:8080
+      
+      # Environment
+      - ASPNETCORE_ENVIRONMENT=${ENVIRONMENT:-Production}
+      - ASPNETCORE_URLS=http://+:8080
+      - TZ=America/Sao_Paulo
+      
+    ports:
+      - "${API_PORT:-8080}:8080"
+    networks:
+      - farmacia_network
+      - dokploy-network  # Rede do Dokploy para Traefik
+    volumes:
+      - app_logs:/app/logs
+    labels:
+      # Traefik configuration for Dokploy
+      - "traefik.enable=true"
+      - "traefik.docker.network=dokploy-network"
+      
+      # API Router
+      - "traefik.http.routers.farmacia-api.rule=Host(`api-dev.diegolima.dev`) || Host(`api.${DOMAIN:-farmacia-dev.diegolima.dev}`)"
+      - "traefik.http.routers.farmacia-api.tls=true"
+      - "traefik.http.routers.farmacia-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.farmacia-api.entrypoints=websecure"
+      
+      # Multi-tenant Router (wildcards)
+      - "traefik.http.routers.farmacia-app.rule=HostRegexp(`{tenant:[a-z0-9-]+}.${DOMAIN:-farmacia-dev.diegolima.dev}`)"
+      - "traefik.http.routers.farmacia-app.tls=true"
+      - "traefik.http.routers.farmacia-app.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.farmacia-app.entrypoints=websecure"
+      
+      # Admin Router
+      - "traefik.http.routers.farmacia-admin.rule=Host(`admin-dev.diegolima.dev`) || Host(`admin.${DOMAIN:-farmacia-dev.diegolima.dev}`)"
+      - "traefik.http.routers.farmacia-admin.tls=true"
+      - "traefik.http.routers.farmacia-admin.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.farmacia-admin.entrypoints=websecure"
+      
+      # Service configuration
+      - "traefik.http.services.farmacia.loadbalancer.server.port=8080"
+      - "traefik.http.services.farmacia.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.farmacia.loadbalancer.healthcheck.interval=30s"
+      - "traefik.http.services.farmacia.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.farmacia.loadbalancer.sticky.cookie.name=farmacia_session"
+      
+      # Middleware para CORS
+      - "traefik.http.middlewares.farmacia-cors.headers.accesscontrolallowmethods=GET,OPTIONS,PUT,POST,DELETE,PATCH"
+      - "traefik.http.middlewares.farmacia-cors.headers.accesscontrolalloworiginlist=https://*.${DOMAIN:-farmacia-dev.diegolima.dev}"
+      - "traefik.http.middlewares.farmacia-cors.headers.accesscontrolmaxage=100"
+      - "traefik.http.middlewares.farmacia-cors.headers.addvaryheader=true"
+      - "traefik.http.routers.farmacia-api.middlewares=farmacia-cors"
+      - "traefik.http.routers.farmacia-app.middlewares=farmacia-cors"
+      
+      # Rate limiting middleware
+      - "traefik.http.middlewares.farmacia-ratelimit.ratelimit.burst=10"
+      - "traefik.http.middlewares.farmacia-ratelimit.ratelimit.average=100"
+      
+      # Dokploy metadata
+      - "com.dokploy.service=farmacia-coreapi"
+      - "com.dokploy.environment=${ENVIRONMENT:-production}"
+      - "com.dokploy.project=farmacia-saas"
+
+networks:
+  farmacia_network:
+    driver: bridge
+    name: farmacia_network
+  dokploy-network:
+    external: true
+    name: dokploy-network
+
+volumes:
+  postgres_data:
+    name: farmacia_postgres_data
+  app_logs:
+    name: farmacia_app_logs

@@ -1,0 +1,5 @@
+/home/diego/projetos/farmacia/backend/src/Farmacia.Domain/obj/Debug/net9.0/Farmacia.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/home/diego/projetos/farmacia/backend/src/Farmacia.Domain/obj/Debug/net9.0/Farmacia.Domain.AssemblyInfoInputs.cache
+/home/diego/projetos/farmacia/backend/src/Farmacia.Domain/obj/Debug/net9.0/Farmacia.Domain.AssemblyInfo.cs
+/home/diego/projetos/farmacia/backend/src/Farmacia.Domain/obj/Debug/net9.0/Farmacia.Domain.csproj.CoreCompileInputs.cache
+/home/diego/projetos/farmacia/backend/src/Farmacia.Domain/obj/Debug/net9.0/Farmacia.Domain.sourcelink.json

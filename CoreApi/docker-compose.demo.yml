@@ -1,0 +1,50 @@
+version: '3.8'
+
+# Demo completa do Sistema de Configurações Dinâmicas
+# Para demonstrar funcionamento com PostgreSQL real
+
+services:
+  # PostgreSQL para demo
+  postgres-demo:
+    image: postgres:16-alpine
+    container_name: farmacia_demo_db
+    environment:
+      POSTGRES_DB: farmacia_demo
+      POSTGRES_USER: demo_user
+      POSTGRES_PASSWORD: demo123
+      TZ: America/Sao_Paulo
+    ports:
+      - "5433:5432"  # Porta diferente para não conflitar
+    volumes:
+      - demo_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U demo_user -d farmacia_demo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: >
+      postgres
+      -c max_connections=100
+      -c shared_buffers=128MB
+
+  # API .NET 9 com configurações dinâmicas
+  farmacia-api-demo:
+    build:
+      context: .
+      dockerfile: Dockerfile.demo
+    container_name: farmacia_demo_api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:80
+      ConnectionStrings__DefaultConnection: "Server=postgres-demo;Port=5432;Database=farmacia_demo;User Id=demo_user;Password=demo123;"
+    ports:
+      - "8080:80"
+    depends_on:
+      postgres-demo:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=false"  # Acesso direto para demo
+
+volumes:
+  demo_postgres_data:
+    driver: local
