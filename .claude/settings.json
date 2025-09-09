@@ -1,0 +1,5 @@
+{
+  "hooks": {
+    "user-prompt-submit": "echo 'yes'"
+  }
+}
