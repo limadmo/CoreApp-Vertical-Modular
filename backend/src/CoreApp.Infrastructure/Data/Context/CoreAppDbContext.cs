@@ -3,7 +3,7 @@ using CoreApp.Domain.Entities;
 using CoreApp.Domain.Entities.Archived;
 using CoreApp.Domain.Entities.Configuration;
 using CoreApp.Domain.Entities.Common;
-using CoreApp.Infrastructure.MultiTenant;
+using CoreApp.Domain.Interfaces.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace CoreApp.Infrastructure.Data.Context;
@@ -14,12 +14,12 @@ namespace CoreApp.Infrastructure.Data.Context;
 /// </summary>
 public class CoreAppDbContext : DbContext
 {
-    private readonly ITenantService _tenantService;
+    private readonly ITenantContext _tenantContext;
 
-    public CoreAppDbContext(DbContextOptions<CoreAppDbContext> options, ITenantService tenantService)
+    public CoreAppDbContext(DbContextOptions<CoreAppDbContext> options, ITenantContext tenantContext)
         : base(options)
     {
-        _tenantService = tenantService;
+        _tenantContext = tenantContext;
     }
 
     #region DbSets - Entidades CoreApp
@@ -56,6 +56,9 @@ public class CoreAppDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        // Aplicar todas as configurações da assembly
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(CoreAppDbContext).Assembly);
+
         // Global Query Filters para Multi-tenant
         var tenantEntities = new[]
         {
@@ -72,8 +75,12 @@ public class CoreAppDbContext : DbContext
 
         foreach (var entityType in tenantEntities)
         {
-            modelBuilder.Entity(entityType).HasQueryFilter(
-                CreateTenantFilter(entityType));
+            // Aplicar filtro de tenant apenas se a entidade implementa ITenantEntity
+            if (typeof(ITenantEntity).IsAssignableFrom(entityType))
+            {
+                modelBuilder.Entity(entityType).HasQueryFilter(
+                    CreateTenantFilter(entityType));
+            }
         }
 
         base.OnModelCreating(modelBuilder);
@@ -84,7 +91,7 @@ public class CoreAppDbContext : DbContext
         var parameterType = entityType;
         var parameter = Expression.Parameter(parameterType, "e");
         var property = Expression.Property(parameter, "TenantId");
-        var tenantId = Expression.Constant(_tenantService.GetCurrentTenantId());
+        var tenantId = Expression.Constant(_tenantContext.GetCurrentTenantId());
         var equal = Expression.Equal(property, tenantId);
         return Expression.Lambda(equal, parameter);
     }

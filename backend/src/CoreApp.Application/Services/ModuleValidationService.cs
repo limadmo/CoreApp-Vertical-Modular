@@ -12,8 +12,8 @@ namespace CoreApp.Application.Services;
 /// </summary>
 /// <remarks>
 /// Implementa validação de módulos pagos conforme CLAUDE.md:
-/// - Starter (R$ 149,90): PRODUCTS, SALES, STOCK, USERS
-/// - Professional (R$ 249,90): + CUSTOMERS, PROMOTIONS, BASIC_REPORTS  
+/// - Starter (R$ 149,90): PRODUTOS, VENDAS, ESTOQUE, USUARIOS
+/// - Professional (R$ 249,90): + CLIENTES, PROMOCOES, RELATORIOS_BASICOS  
 /// - Enterprise (R$ 399,90): ALL módulos disponíveis
 /// </remarks>
 public class ModuleValidationService : IModuleValidationService
@@ -32,13 +32,13 @@ public class ModuleValidationService : IModuleValidationService
     {
         ["STARTER"] = new HashSet<string> 
         { 
-            "PRODUCTS", "SALES", "STOCK", "USERS" 
+            "PRODUTOS", "VENDAS", "ESTOQUE", "USUARIOS" 
         },
         
         ["PROFESSIONAL"] = new HashSet<string> 
         { 
-            "PRODUCTS", "SALES", "STOCK", "USERS", 
-            "CUSTOMERS", "PROMOTIONS", "BASIC_REPORTS" 
+            "PRODUTOS", "VENDAS", "ESTOQUE", "USUARIOS", 
+            "CLIENTES", "PROMOCOES", "RELATORIOS_BASICOS" 
         },
         
         ["ENTERPRISE"] = new HashSet<string> 
@@ -51,13 +51,13 @@ public class ModuleValidationService : IModuleValidationService
     private static readonly HashSet<string> TodosModulos = new()
     {
         // Módulos Starter
-        "PRODUCTS", "SALES", "STOCK", "USERS",
+        "PRODUTOS", "VENDAS", "ESTOQUE", "USUARIOS",
         
         // Módulos Professional  
-        "CUSTOMERS", "PROMOTIONS", "BASIC_REPORTS",
+        "CLIENTES", "PROMOCOES", "RELATORIOS_BASICOS",
         
         // Módulos Enterprise
-        "ADVANCED_REPORTS", "AUDIT", "SUPPLIERS", "MOBILE",
+        "RELATORIOS_AVANCADOS", "AUDIT", "SUPPLIERS", "MOBILE",
         
         // Módulos especiais
         "FISCAL", "INVENTORY_MANAGEMENT", "CRM", "ANALYTICS"
@@ -418,12 +418,12 @@ public class ModuleValidationService : IModuleValidationService
     {
         return operacao.ToUpper() switch
         {
-            "CRIAR_PRODUTO" or "LISTAR_PRODUTOS" or "ATUALIZAR_PRODUTO" => "PRODUCTS",
-            "CRIAR_VENDA" or "PROCESSAR_VENDA" or "LISTAR_VENDAS" => "SALES",
-            "MOVIMENTAR_ESTOQUE" or "CONSULTAR_ESTOQUE" => "STOCK",
-            "CRIAR_CLIENTE" or "LISTAR_CLIENTES" => "CUSTOMERS",
-            "CRIAR_PROMOCAO" or "APLICAR_DESCONTO" => "PROMOTIONS",
-            "GERAR_RELATORIO" or "EXPORTAR_DADOS" => "BASIC_REPORTS",
+            "CRIAR_PRODUTO" or "LISTAR_PRODUTOS" or "ATUALIZAR_PRODUTO" => "PRODUTOS",
+            "CRIAR_VENDA" or "PROCESSAR_VENDA" or "LISTAR_VENDAS" => "VENDAS",
+            "MOVIMENTAR_ESTOQUE" or "CONSULTAR_ESTOQUE" => "ESTOQUE",
+            "CRIAR_CLIENTE" or "LISTAR_CLIENTES" => "CLIENTES",
+            "CRIAR_PROMOCAO" or "APLICAR_DESCONTO" => "PROMOCOES",
+            "GERAR_RELATORIO" or "EXPORTAR_DADOS" => "RELATORIOS_BASICOS",
             "AUDITORIA" or "LOG_COMPLIANCE" => "AUDIT",
             _ => null // Operação básica sem módulo específico
         };
@@ -436,9 +436,9 @@ public class ModuleValidationService : IModuleValidationService
     {
         return modulo.ToUpper() switch
         {
-            "PRODUCTS" or "SALES" or "STOCK" or "USERS" => "STARTER",
-            "CUSTOMERS" or "PROMOTIONS" or "BASIC_REPORTS" => "PROFESSIONAL",
-            "ADVANCED_REPORTS" or "AUDIT" or "SUPPLIERS" or "MOBILE" => "ENTERPRISE",
+            "PRODUTOS" or "VENDAS" or "ESTOQUE" or "USUARIOS" => "STARTER",
+            "CLIENTES" or "PROMOCOES" or "RELATORIOS_BASICOS" => "PROFESSIONAL",
+            "RELATORIOS_AVANCADOS" or "AUDIT" or "SUPPLIERS" or "MOBILE" => "ENTERPRISE",
             _ => "STARTER"
         };
     }
@@ -536,4 +536,14 @@ public class ModuleNotActiveException : Exception
     public ModuleNotActiveException(string message) : base(message) { }
     
     public ModuleNotActiveException(string message, Exception innerException) : base(message, innerException) { }
+}
+
+/// <summary>
+/// Exceção lançada quando uma entidade não é encontrada
+/// </summary>
+public class NotFoundException : Exception
+{
+    public NotFoundException(string message) : base(message) { }
+    
+    public NotFoundException(string message, Exception innerException) : base(message, innerException) { }
 }

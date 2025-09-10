@@ -3,6 +3,43 @@
 version: '3.8'
 
 services:
+  # Traefik Reverse Proxy
+  traefik:
+    image: traefik:v3.0
+    container_name: coreapp_traefik
+    restart: unless-stopped
+    command:
+      - --configFile=/etc/traefik/traefik.yml
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - traefik_letsencrypt:/letsencrypt
+      - traefik_logs:/var/log/traefik
+    networks:
+      - coreapp_network
+      - dokploy-network
+    environment:
+      - TZ=America/Sao_Paulo
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=coreapp_network"
+      
+      # Dashboard
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`localhost`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=traefik"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+
   # Database PostgreSQL 17 - CoreApp
   postgres:
     image: postgres:17-alpine
@@ -90,6 +127,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      traefik:
+        condition: service_healthy
     environment:
       # Database
       - ConnectionStrings__DefaultConnection=Server=postgres;Port=5432;Database=coreapp_saas_${ENV:-development};User Id=admin;Password=${DB_PASSWORD:-dev123456};
@@ -118,39 +157,30 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - TZ=America/Sao_Paulo
       
-    ports:
-      - "8080:8080"
     networks:
       - coreapp_network
       - dokploy-network  # Rede do Dokploy para Traefik
     volumes:
       - app_logs:/app/logs
     labels:
-      # Traefik configuration for Dokploy
+      # Traefik configuration
       - "traefik.enable=true"
-      - "traefik.docker.network=dokploy-network"
+      - "traefik.docker.network=coreapp_network"
       
-      # API Router - Desenvolvimento local
+      # API Router principal
       - "traefik.http.routers.coreapp-api.rule=Host(`localhost`)"
       - "traefik.http.routers.coreapp-api.entrypoints=web"
+      - "traefik.http.routers.coreapp-api.service=coreapp-api"
       
       # Service configuration
-      - "traefik.http.services.coreapp.loadbalancer.server.port=8080"
-      - "traefik.http.services.coreapp.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.coreapp.loadbalancer.healthcheck.interval=30s"
-      - "traefik.http.services.coreapp.loadbalancer.sticky.cookie=true"
-      - "traefik.http.services.coreapp.loadbalancer.sticky.cookie.name=coreapp_session"
+      - "traefik.http.services.coreapp-api.loadbalancer.server.port=8080"
+      - "traefik.http.services.coreapp-api.loadbalancer.healthcheck.path=/health"
+      - "traefik.http.services.coreapp-api.loadbalancer.healthcheck.interval=30s"
+      - "traefik.http.services.coreapp-api.loadbalancer.sticky.cookie=true"
+      - "traefik.http.services.coreapp-api.loadbalancer.sticky.cookie.name=coreapp_session"
       
-      # Middleware para CORS - Desenvolvimento local
-      - "traefik.http.middlewares.coreapp-cors.headers.accesscontrolallowmethods=GET,OPTIONS,PUT,POST,DELETE,PATCH"
-      - "traefik.http.middlewares.coreapp-cors.headers.accesscontrolalloworiginlist=*"
-      - "traefik.http.middlewares.coreapp-cors.headers.accesscontrolmaxage=100"
-      - "traefik.http.middlewares.coreapp-cors.headers.addvaryheader=true"
-      - "traefik.http.routers.coreapp-api.middlewares=coreapp-cors"
-      
-      # Rate limiting middleware
-      - "traefik.http.middlewares.coreapp-ratelimit.ratelimit.burst=10"
-      - "traefik.http.middlewares.coreapp-ratelimit.ratelimit.average=100"
+      # Middlewares aplicados
+      - "traefik.http.routers.coreapp-api.middlewares=cors-dev@file,rate-limit@file,compression@file"
       
       # Dokploy metadata
       - "com.dokploy.service=coreapp-coreapi"
@@ -178,3 +208,7 @@ volumes:
     name: coreapp_sonar_extensions
   app_logs:
     name: coreapp_app_logs
+  traefik_letsencrypt:
+    name: coreapp_traefik_letsencrypt
+  traefik_logs:
+    name: coreapp_traefik_logs

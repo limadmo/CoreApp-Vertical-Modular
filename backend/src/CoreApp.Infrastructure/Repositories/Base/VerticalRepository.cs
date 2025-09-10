@@ -94,7 +94,7 @@ public class VerticalRepository<TEntity> : BaseRepository<TEntity>, IVerticalRep
                     
                     if (properties?.TryGetValue(propertyName, out var value) == true)
                     {
-                        return value?.ToString() == propertyValue?.ToString();
+                        return AreVerticalValuesEqual(value, propertyValue);
                     }
                 }
                 catch (JsonException ex)
@@ -556,7 +556,7 @@ public class VerticalRepository<TEntity> : BaseRepository<TEntity>, IVerticalRep
 
             return queryConditions.All(condition =>
                 properties.TryGetValue(condition.Key, out var value) &&
-                value?.ToString() == condition.Value?.ToString());
+                AreVerticalValuesEqual(value, condition.Value));
         }
         catch (JsonException)
         {
@@ -697,6 +697,57 @@ public class VerticalRepository<TEntity> : BaseRepository<TEntity>, IVerticalRep
             default:
                 throw new NotSupportedException($"Tipo de métrica não suportado: {metrics.MetricsType}");
         }
+    }
+    
+    /// <summary>
+    /// Compara valores de propriedades JSON de forma segura, considerando tipos diferentes
+    /// </summary>
+    private bool AreVerticalValuesEqual(object? value1, object? value2)
+    {
+        if (value1 == null && value2 == null) return true;
+        if (value1 == null || value2 == null) return false;
+        
+        // Se ambos são do mesmo tipo, compara diretamente
+        if (value1.GetType() == value2.GetType())
+            return value1.Equals(value2);
+            
+        // Para JsonElement (System.Text.Json), extrai o valor real
+        if (value1 is JsonElement element1)
+            value1 = ExtractJsonElementValue(element1);
+        if (value2 is JsonElement element2)
+            value2 = ExtractJsonElementValue(element2);
+            
+        // Comparações específicas por tipo
+        if (value1 is bool bool1 && value2 is bool bool2)
+            return bool1 == bool2;
+        if (value1 is bool boolVal && bool.TryParse(value2?.ToString(), out bool parsedBool))
+            return boolVal == parsedBool;
+        if (value2 is bool boolVal2 && bool.TryParse(value1?.ToString(), out bool parsedBool2))
+            return boolVal2 == parsedBool2;
+            
+        // Para números
+        if (decimal.TryParse(value1?.ToString(), out decimal num1) && 
+            decimal.TryParse(value2?.ToString(), out decimal num2))
+            return num1 == num2;
+            
+        // Fallback para comparação de string
+        return value1?.ToString() == value2?.ToString();
+    }
+    
+    /// <summary>
+    /// Extrai o valor real de um JsonElement
+    /// </summary>
+    private object? ExtractJsonElementValue(JsonElement element)
+    {
+        return element.ValueKind switch
+        {
+            JsonValueKind.String => element.GetString(),
+            JsonValueKind.Number => element.GetDecimal(),
+            JsonValueKind.True => true,
+            JsonValueKind.False => false,
+            JsonValueKind.Null => null,
+            _ => element.ToString()
+        };
     }
 
     #endregion

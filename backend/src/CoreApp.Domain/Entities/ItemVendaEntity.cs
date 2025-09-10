@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using CoreApp.Domain.Entities.Base;
 using CoreApp.Domain.Entities.Common;
 
@@ -6,9 +7,9 @@ namespace CoreApp.Domain.Entities;
 
 /// <summary>
 /// Entidade ItemVenda para sistema CoreApp multi-tenant
-/// Implementa padrões SOLID e compliance brasileiro
+/// Representa um item individual dentro de uma venda
 /// </summary>
-public class ItemVendaEntity : BaseEntity, ITenantEntity, ISoftDeletableEntity, IArchivableEntity
+public class ItemVendaEntity : BaseEntity, ITenantEntity
 {
     /// <summary>
     /// Identificador único da entidade
@@ -24,91 +25,135 @@ public class ItemVendaEntity : BaseEntity, ITenantEntity, ISoftDeletableEntity, 
     public string TenantId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Nome/descrição principal da ItemVenda
+    /// ID da venda a que pertence este item
+    /// </summary>
+    [Required]
+    public Guid VendaId { get; set; }
+
+    /// <summary>
+    /// Navegação para a venda
+    /// </summary>
+    public VendaEntity? Venda { get; set; }
+
+    /// <summary>
+    /// ID do produto vendido
+    /// </summary>
+    [Required]
+    public Guid ProdutoId { get; set; }
+
+    /// <summary>
+    /// Navegação para o produto
+    /// </summary>
+    public ProdutoEntity? Produto { get; set; }
+
+    /// <summary>
+    /// Quantidade vendida
+    /// </summary>
+    [Column(TypeName = "decimal(18,3)")]
+    public decimal Quantidade { get; set; }
+
+    /// <summary>
+    /// Preço unitário no momento da venda
+    /// </summary>
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal PrecoUnitario { get; set; }
+
+    /// <summary>
+    /// Valor total do item (Quantidade * PrecoUnitario - Desconto)
+    /// </summary>
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal ValorTotal { get; set; }
+
+    /// <summary>
+    /// Valor de desconto aplicado no item
+    /// </summary>
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal ValorDesconto { get; set; }
+
+    /// <summary>
+    /// Percentual de desconto aplicado
+    /// </summary>
+    [Column(TypeName = "decimal(5,2)")]
+    public decimal PercentualDesconto { get; set; }
+
+    /// <summary>
+    /// Nome do produto no momento da venda (para histórico)
     /// </summary>
     [Required]
     [StringLength(255)]
-    public string Nome { get; set; } = string.Empty;
+    public string NomeProduto { get; set; } = string.Empty;
 
     /// <summary>
-    /// Descrição detalhada opcional
+    /// Código do produto no momento da venda
     /// </summary>
-    [StringLength(1000)]
-    public string? Descricao { get; set; }
+    [StringLength(50)]
+    public string? CodigoProduto { get; set; }
 
     /// <summary>
-    /// Indica se o registro está ativo
+    /// Unidade de medida do produto
     /// </summary>
-    public bool Ativo { get; set; } = true;
-
-    // Implementação de ISoftDeletableEntity
-    /// <summary>
-    /// Indica se o registro foi excluído logicamente
-    /// </summary>
-    public bool Excluido { get; set; } = false;
+    [Required]
+    [StringLength(10)]
+    public string UnidadeMedida { get; set; } = "UN";
 
     /// <summary>
-    /// Data da exclusão lógica
-    /// </summary>
-    public DateTime? DataExclusao { get; set; }
-
-    /// <summary>
-    /// Usuário que executou a exclusão
-    /// </summary>
-    [StringLength(100)]
-    public string? UsuarioExclusao { get; set; }
-
-    /// <summary>
-    /// Motivo da exclusão
+    /// Observações específicas do item
     /// </summary>
     [StringLength(500)]
-    public string? MotivoExclusao { get; set; }
+    public string? Observacoes { get; set; }
 
     /// <summary>
-    /// Marca o registro como excluído logicamente
+    /// Calcula o valor total do item baseado na quantidade e preço unitário
     /// </summary>
-    /// <param name="usuarioId">ID do usuário que está excluindo</param>
-    /// <param name="motivo">Motivo da exclusão</param>
-    public void MarkAsDeleted(string? usuarioId = null, string? motivo = null)
+    public void CalcularValorTotal()
     {
-        Excluido = true;
-        DataExclusao = DateTime.UtcNow;
-        UsuarioExclusao = usuarioId;
-        MotivoExclusao = motivo;
+        var valorBruto = Quantidade * PrecoUnitario;
+        ValorTotal = valorBruto - ValorDesconto;
     }
 
     /// <summary>
-    /// Restaura um registro excluído logicamente
+    /// Aplica desconto por percentual
     /// </summary>
-    public void Restore()
+    /// <param name="percentual">Percentual de desconto (0-100)</param>
+    public void AplicarDescontoPercentual(decimal percentual)
     {
-        Excluido = false;
-        DataExclusao = null;
-        UsuarioExclusao = null;
-        MotivoExclusao = null;
+        if (percentual < 0 || percentual > 100)
+            throw new ArgumentException("Percentual deve estar entre 0 e 100");
+
+        PercentualDesconto = percentual;
+        var valorBruto = Quantidade * PrecoUnitario;
+        ValorDesconto = valorBruto * (percentual / 100);
+        CalcularValorTotal();
     }
 
-    // Implementação de IArchivableEntity
     /// <summary>
-    /// Indica se o registro foi arquivado
+    /// Aplica desconto por valor fixo
     /// </summary>
-    public bool Arquivado { get; set; } = false;
-
-    /// <summary>
-    /// Data do arquivamento
-    /// </summary>
-    public DateTime? DataArquivamento { get; set; }
-
-    /// <summary>
-    /// Data da última movimentação/alteração
-    /// </summary>
-    public DateTime UltimaMovimentacao { get; set; } = DateTime.UtcNow;
-
-    /// <summary>
-    /// Atualiza a data da última movimentação
-    /// </summary>
-    public void AtualizarUltimaMovimentacao()
+    /// <param name="valor">Valor do desconto</param>
+    public void AplicarDescontoValor(decimal valor)
     {
-        UltimaMovimentacao = DateTime.UtcNow;
+        if (valor < 0)
+            throw new ArgumentException("Valor do desconto não pode ser negativo");
+
+        var valorBruto = Quantidade * PrecoUnitario;
+        if (valor > valorBruto)
+            throw new ArgumentException("Desconto não pode ser maior que o valor bruto");
+
+        ValorDesconto = valor;
+        PercentualDesconto = valorBruto > 0 ? (valor / valorBruto) * 100 : 0;
+        CalcularValorTotal();
+    }
+
+    /// <summary>
+    /// Atualiza a quantidade e recalcula o valor
+    /// </summary>
+    /// <param name="novaQuantidade">Nova quantidade</param>
+    public void AtualizarQuantidade(decimal novaQuantidade)
+    {
+        if (novaQuantidade <= 0)
+            throw new ArgumentException("Quantidade deve ser maior que zero");
+
+        Quantidade = novaQuantidade;
+        CalcularValorTotal();
     }
 }

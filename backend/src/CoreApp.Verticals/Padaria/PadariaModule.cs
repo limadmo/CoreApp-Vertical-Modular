@@ -26,16 +26,16 @@ public class PadariaModule : BaseVerticalModule
 
     public override IEnumerable<string> RequiredModules => new[]
     {
-        "PRODUCTS",  // Gestão de produtos (pães, doces, salgados)
-        "SALES",     // Sistema de vendas no balcão
-        "STOCK"      // Controle de estoque com validade por horas
+        "PRODUTOS",  // Gestão de produtos (pães, doces, salgados)
+        "VENDAS",     // Sistema de vendas no balcão
+        "ESTOQUE"      // Controle de estoque com validade por horas
     };
 
     public override IEnumerable<string> OptionalModules => new[]
     {
-        "CUSTOMERS",       // CRM para clientes fiéis e encomendas
-        "PROMOTIONS",      // Descontos e promoções (combo café da manhã)
-        "BASIC_REPORTS",   // Relatórios de vendas por período do dia
+        "CLIENTES",       // CRM para clientes fiéis e encomendas
+        "PROMOCOES",      // Descontos e promoções (combo café da manhã)
+        "RELATORIOS_BASICOS",   // Relatórios de vendas por período do dia
         "DELIVERY",        // Sistema de entrega para encomendas
         "MOBILE"           // App para encomendas e cardápio digital
     };

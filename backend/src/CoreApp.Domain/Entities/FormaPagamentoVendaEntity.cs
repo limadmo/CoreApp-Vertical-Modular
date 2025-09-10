@@ -1,14 +1,16 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using CoreApp.Domain.Entities.Base;
 using CoreApp.Domain.Entities.Common;
+using CoreApp.Domain.Entities.Configuration;
 
 namespace CoreApp.Domain.Entities;
 
 /// <summary>
-/// Entidade FormaPagamentoVenda para sistema CoreApp multi-tenant
-/// Implementa padrões SOLID e compliance brasileiro
+/// Entidade que representa as formas de pagamento utilizadas em uma venda específica
+/// Tabela de associação entre Venda e FormaPagamento com valor pago
 /// </summary>
-public class FormaPagamentoVendaEntity : BaseEntity, ITenantEntity, ISoftDeletableEntity, IArchivableEntity
+public class FormaPagamentoVendaEntity : BaseEntity, ITenantEntity
 {
     /// <summary>
     /// Identificador único da entidade
@@ -24,91 +26,109 @@ public class FormaPagamentoVendaEntity : BaseEntity, ITenantEntity, ISoftDeletab
     public string TenantId { get; set; } = string.Empty;
 
     /// <summary>
-    /// Nome/descrição principal da FormaPagamentoVenda
+    /// ID da venda a que pertence este pagamento
     /// </summary>
     [Required]
-    [StringLength(255)]
-    public string Nome { get; set; } = string.Empty;
+    public Guid VendaId { get; set; }
 
     /// <summary>
-    /// Descrição detalhada opcional
+    /// Navegação para a venda
     /// </summary>
-    [StringLength(1000)]
-    public string? Descricao { get; set; }
+    public VendaEntity? Venda { get; set; }
 
     /// <summary>
-    /// Indica se o registro está ativo
+    /// ID da forma de pagamento utilizada
     /// </summary>
-    public bool Ativo { get; set; } = true;
+    [Required]
+    public Guid FormaPagamentoId { get; set; }
 
-    // Implementação de ISoftDeletableEntity
     /// <summary>
-    /// Indica se o registro foi excluído logicamente
+    /// Navegação para forma de pagamento
     /// </summary>
-    public bool Excluido { get; set; } = false;
+    public FormaPagamentoEntity? FormaPagamento { get; set; }
 
     /// <summary>
-    /// Data da exclusão lógica
+    /// Valor pago com esta forma de pagamento
     /// </summary>
-    public DateTime? DataExclusao { get; set; }
+    [Column(TypeName = "decimal(18,2)")]
+    public decimal Valor { get; set; }
 
     /// <summary>
-    /// Usuário que executou a exclusão
+    /// Número de parcelas (para cartão de crédito)
+    /// </summary>
+    public int? NumeroParcelas { get; set; }
+
+    /// <summary>
+    /// Dados adicionais específicos do pagamento (JSON)
+    /// Exemplo: {"numeroCartao": "****1234", "nsu": "123456", "autorizacao": "ABC123"}
+    /// </summary>
+    public string? DadosAdicionais { get; set; }
+
+    /// <summary>
+    /// Status do pagamento (PENDENTE, APROVADO, REJEITADO, CANCELADO)
+    /// </summary>
+    [StringLength(20)]
+    public string Status { get; set; } = "PENDENTE";
+
+    /// <summary>
+    /// ID da transação externa (gateway de pagamento)
     /// </summary>
     [StringLength(100)]
-    public string? UsuarioExclusao { get; set; }
+    public string? TransacaoExternaId { get; set; }
 
     /// <summary>
-    /// Motivo da exclusão
+    /// Data e hora do processamento do pagamento
+    /// </summary>
+    public DateTime? DataProcessamento { get; set; }
+
+    /// <summary>
+    /// Observações sobre o pagamento
     /// </summary>
     [StringLength(500)]
-    public string? MotivoExclusao { get; set; }
+    public string? Observacoes { get; set; }
 
     /// <summary>
-    /// Marca o registro como excluído logicamente
+    /// Aprova o pagamento
     /// </summary>
-    /// <param name="usuarioId">ID do usuário que está excluindo</param>
-    /// <param name="motivo">Motivo da exclusão</param>
-    public void MarkAsDeleted(string? usuarioId = null, string? motivo = null)
+    public void Aprovar()
     {
-        Excluido = true;
-        DataExclusao = DateTime.UtcNow;
-        UsuarioExclusao = usuarioId;
-        MotivoExclusao = motivo;
+        Status = "APROVADO";
+        DataProcessamento = DateTime.UtcNow;
     }
 
     /// <summary>
-    /// Restaura um registro excluído logicamente
+    /// Rejeita o pagamento
     /// </summary>
-    public void Restore()
+    /// <param name="motivo">Motivo da rejeição</param>
+    public void Rejeitar(string? motivo = null)
     {
-        Excluido = false;
-        DataExclusao = null;
-        UsuarioExclusao = null;
-        MotivoExclusao = null;
+        Status = "REJEITADO";
+        DataProcessamento = DateTime.UtcNow;
+        if (!string.IsNullOrEmpty(motivo))
+        {
+            Observacoes = motivo;
+        }
     }
 
-    // Implementação de IArchivableEntity
     /// <summary>
-    /// Indica se o registro foi arquivado
+    /// Cancela o pagamento
     /// </summary>
-    public bool Arquivado { get; set; } = false;
-
-    /// <summary>
-    /// Data do arquivamento
-    /// </summary>
-    public DateTime? DataArquivamento { get; set; }
-
-    /// <summary>
-    /// Data da última movimentação/alteração
-    /// </summary>
-    public DateTime UltimaMovimentacao { get; set; } = DateTime.UtcNow;
-
-    /// <summary>
-    /// Atualiza a data da última movimentação
-    /// </summary>
-    public void AtualizarUltimaMovimentacao()
+    /// <param name="motivo">Motivo do cancelamento</param>
+    public void Cancelar(string? motivo = null)
     {
-        UltimaMovimentacao = DateTime.UtcNow;
+        Status = "CANCELADO";
+        DataProcessamento = DateTime.UtcNow;
+        if (!string.IsNullOrEmpty(motivo))
+        {
+            Observacoes = motivo;
+        }
+    }
+
+    /// <summary>
+    /// Verifica se o pagamento foi aprovado
+    /// </summary>
+    public bool IsAprovado()
+    {
+        return Status == "APROVADO";
     }
 }

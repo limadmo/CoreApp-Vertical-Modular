@@ -16,7 +16,7 @@ public class MockModuleValidationService : IModuleValidationService
     public Task<IEnumerable<string>> GetAvailableModulesAsync(string tenantId, CancellationToken cancellationToken = default)
     {
         // Simular módulos disponíveis para desenvolvimento
-        var modules = new[] { "PRODUCTS", "SALES", "STOCK", "CUSTOMERS", "REPORTS" };
+        var modules = new[] { "PRODUTOS", "VENDAS", "ESTOQUE", "CLIENTES", "RELATORIOS" };
         return Task.FromResult<IEnumerable<string>>(modules);
     }
 
@@ -41,7 +41,7 @@ public class MockModuleValidationService : IModuleValidationService
             TenantId = tenantId,
             PlanoAtual = "Enterprise",
             DataVencimento = DateTime.UtcNow.AddYears(1),
-            ModulosAtivos = new List<string> { "PRODUCTS", "SALES", "STOCK", "CUSTOMERS", "REPORTS" },
+            ModulosAtivos = new List<string> { "PRODUTOS", "VENDAS", "ESTOQUE", "CLIENTES", "RELATORIOS" },
             PlanoAtivo = true,
             LimitesRecursos = new Dictionary<string, int>() // Sem limites no Enterprise
         };
