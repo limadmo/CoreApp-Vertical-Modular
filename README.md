@@ -97,12 +97,17 @@ curl http://localhost:8080/health
 |---------|-----|-----------|
 | **API Backend** | http://localhost:8080/health | Health Check |
 | **Swagger UI** | http://localhost:8080/swagger | Documentação API |
-| **PostgreSQL** | localhost:5432 | Banco direto |
+| **PostgreSQL CoreApp** | localhost:5432 | Banco principal |
+| **PostgreSQL SonarQube** | localhost:5433 | Banco SonarQube |
+| **SonarQube** | http://localhost:9000 | Análise código (dev) |
 
 ### Comandos Docker
 ```bash
-# Iniciar sistema
+# Iniciar sistema (produção/staging)
 docker-compose up -d
+
+# Iniciar sistema + SonarQube (desenvolvimento)
+docker-compose --profile development up -d
 
 # Parar sistema
 docker-compose down
@@ -111,7 +116,10 @@ docker-compose down
 docker-compose up -d --build --force-recreate
 
 # Ver logs
-docker-compose logs -f backend
+docker-compose logs -f coreapp
+
+# SonarQube (apenas desenvolvimento)
+./scripts/sonar-dev.sh
 
 # Trocar para produção
 echo "ENV=production" > .env && docker-compose up -d

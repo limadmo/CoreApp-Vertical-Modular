@@ -1,29 +1,84 @@
 # Docker Compose para CoreApp - Sistema SAAS Multi-tenant Brasileiro
-# Configuração para desenvolvimento e produção com Traefik
+# Configuração para desenvolvimento e produção com Traefik + SonarQube
 version: '3.8'
 
 services:
-  # Database PostgreSQL
+  # Database PostgreSQL 17 - CoreApp
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: coreapp_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: coreapp_saas_prod
+      POSTGRES_DB: coreapp_saas_${ENV:-development}
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: ${DB_PASSWORD:-dev123456}
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=pt_BR.UTF-8"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    expose:
-      - "5432"
+    ports:
+      - "5432:5432"
     networks:
       - coreapp_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d coreapp_saas_prod"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d coreapp_saas_${ENV:-development}"]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  # Database PostgreSQL 17 - SonarQube (apenas desenvolvimento)
+  sonar-db:
+    image: postgres:17-alpine
+    container_name: sonar_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sonarqube
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: ${SONAR_DB_PASSWORD:-sonar123}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    volumes:
+      - sonar_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - coreapp_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonarqube"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    profiles:
+      - development
+
+  # SonarQube Community Edition (apenas desenvolvimento)
+  sonarqube:
+    image: sonarqube:community
+    container_name: coreapp_sonarqube
+    restart: unless-stopped
+    depends_on:
+      sonar-db:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonarqube
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: ${SONAR_DB_PASSWORD:-sonar123}
+      SONAR_WEB_PORT: 9000
+      SONAR_WEB_CONTEXT: /
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_logs:/opt/sonarqube/logs
+      - sonar_extensions:/opt/sonarqube/extensions
+    ports:
+      - "9000:9000"
+    networks:
+      - coreapp_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/api/system/status | grep -q UP || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    profiles:
+      - development
 
   # CoreApp Application
   coreapp:
@@ -37,7 +92,7 @@ services:
         condition: service_healthy
     environment:
       # Database
-      - ConnectionStrings__DefaultConnection=Server=postgres;Port=5432;Database=coreapp_saas_prod;User Id=admin;Password=${DB_PASSWORD:-dev123456};
+      - ConnectionStrings__DefaultConnection=Server=postgres;Port=5432;Database=coreapp_saas_${ENV:-development};User Id=admin;Password=${DB_PASSWORD:-dev123456};
       
       # Security
       - JWT__Secret=${JWT_SECRET:-sua-chave-secreta-muito-segura-aqui-com-pelo-menos-32-caracteres}
@@ -63,8 +118,8 @@ services:
       - ASPNETCORE_URLS=http://+:8080
       - TZ=America/Sao_Paulo
       
-    expose:
-      - "8080"
+    ports:
+      - "8080:8080"
     networks:
       - coreapp_network
       - dokploy-network  # Rede do Dokploy para Traefik
@@ -113,5 +168,13 @@ networks:
 volumes:
   postgres_data:
     name: coreapp_postgres_data
+  sonar_postgres_data:
+    name: coreapp_sonar_postgres_data
+  sonar_data:
+    name: coreapp_sonar_data
+  sonar_logs:
+    name: coreapp_sonar_logs
+  sonar_extensions:
+    name: coreapp_sonar_extensions
   app_logs:
     name: coreapp_app_logs
