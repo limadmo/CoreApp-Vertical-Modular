@@ -1,0 +1,273 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CoreApp.Application</name>
+    </assembly>
+    <members>
+        <member name="T:CoreApp.Application.Services.ModuleValidationService">
+            <summary>
+            Serviço real para validação de módulos comerciais brasileiros
+            Substitui o mock com implementação completa baseada em banco de dados
+            </summary>
+            <remarks>
+            Implementa validação de módulos pagos conforme CLAUDE.md:
+            - Starter (R$ 149,90): PRODUCTS, SALES, STOCK, USERS
+            - Professional (R$ 249,90): + CUSTOMERS, PROMOTIONS, BASIC_REPORTS  
+            - Enterprise (R$ 399,90): ALL módulos disponíveis
+            </remarks>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.HasModuleAccessAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Verifica se um tenant tem acesso a um módulo específico (implementação da interface)
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.HasActiveModuleAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Verifica se um tenant tem um módulo específico ativo
+            Implementa cache conforme especificação CLAUDE.md
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.HasActiveModule(System.String,System.String)">
+            <summary>
+            Versão síncrona para compatibilidade
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.ValidateModuleAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Valida módulo e lança exceção se não estiver ativo
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.GetActiveModulesAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Obtém todos os módulos ativos de um tenant
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.GetAvailableModulesAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Obtém todos os módulos disponíveis para um tenant (implementação da interface)
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.InvalidateCache(System.String)">
+            <summary>
+            Invalida cache de módulos de um tenant
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.ValidateMultipleModulesAsync(System.String,System.Collections.Generic.IEnumerable{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Valida múltiplos módulos de uma vez
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.CheckResourceLimitAsync(System.String,System.String,System.String,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Verifica limites de uso de um módulo para um tenant
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.GetTenantPlanInfoAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Obtém informações detalhadas do plano atual do tenant
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.ValidateOperationAsync(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Valida se uma operação é permitida para o tenant
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.GetLimitesPorPlano(System.String)">
+            <summary>
+            Obtém limites de recursos por plano
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.MapearOperacaoParaModulo(System.String)">
+            <summary>
+            Mapeia operação para módulo necessário
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.GetPlanoMinimoParaModulo(System.String)">
+            <summary>
+            Obtém plano mínimo necessário para um módulo
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ModuleValidationService.LoadTenantModulesFromDatabaseAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Carrega informações de módulos do tenant do banco de dados
+            TODO: Implementar quando entidades de Tenant e Plano estiverem criadas
+            </summary>
+        </member>
+        <member name="T:CoreApp.Application.Services.ModuleValidationService.TenantModuleInfo">
+            <summary>
+            Informações dos módulos de um tenant com cache
+            </summary>
+        </member>
+        <member name="T:CoreApp.Application.Services.ModuleNotActiveException">
+            <summary>
+            Exceção lançada quando um módulo não está ativo para o tenant
+            </summary>
+        </member>
+        <member name="T:CoreApp.Application.Services.IProdutoService">
+            <summary>
+            Serviço de aplicação para gestão de produtos comerciais multi-tenant
+            Implementa regras de negócio e coordena operações entre repositórios e verticais
+            </summary>
+            <remarks>
+            Serviço real que substitui mocks, implementando:
+            - Isolamento por tenant automático
+            - Validação de módulos comerciais
+            - Integração com verticais de negócio
+            - Controle transacional via Unit of Work
+            </remarks>
+        </member>
+        <member name="M:CoreApp.Application.Services.IProdutoService.ListarProdutosAsync(CoreApp.Application.Services.PageRequest,System.Threading.CancellationToken)">
+            <summary>
+            Lista produtos do tenant atual com paginação
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.IProdutoService.ObterProdutoPorIdAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Obtém um produto por ID
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.IProdutoService.CriarProdutoAsync(CoreApp.Application.Services.CriarProdutoRequest,System.Threading.CancellationToken)">
+            <summary>
+            Cria um novo produto
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.IProdutoService.AtualizarProdutoAsync(System.Guid,CoreApp.Application.Services.AtualizarProdutoRequest,System.Threading.CancellationToken)">
+            <summary>
+            Atualiza um produto existente
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.IProdutoService.RemoverProdutoAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Remove um produto (soft delete)
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.IProdutoService.BuscarPorNomeAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Busca produtos por nome
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ProdutoService.ListarProdutosAsync(CoreApp.Application.Services.PageRequest,System.Threading.CancellationToken)">
+            <summary>
+            Lista produtos do tenant atual com paginação
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ProdutoService.ObterProdutoPorIdAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Obtém um produto por ID
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ProdutoService.CriarProdutoAsync(CoreApp.Application.Services.CriarProdutoRequest,System.Threading.CancellationToken)">
+            <summary>
+            Cria um novo produto
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ProdutoService.AtualizarProdutoAsync(System.Guid,CoreApp.Application.Services.AtualizarProdutoRequest,System.Threading.CancellationToken)">
+            <summary>
+            Atualiza um produto existente
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ProdutoService.RemoverProdutoAsync(System.Guid,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Remove um produto (soft delete)
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.ProdutoService.BuscarPorNomeAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Busca produtos por nome
+            </summary>
+        </member>
+        <member name="T:CoreApp.Application.Services.VerticalCompositionService">
+            <summary>
+            Serviço principal para composição e orquestração de verticais de negócio brasileiros
+            Coordena a interação entre diferentes verticais (Padaria, Farmácia, Supermercado, etc.)
+            </summary>
+            <remarks>
+            Implementa arquitetura de composição conforme CLAUDE.md:
+            - Composição ao invés de herança complexa (SOLID)
+            - Suporte a múltiplos verticais simultâneos
+            - Coordenação transacional via Unit of Work
+            - Cache de serviços verticais para performance
+            </remarks>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.RegisterVerticalAsync(System.String,CoreApp.Domain.Interfaces.Services.VerticalMetadata,System.Threading.CancellationToken)">
+            <summary>
+            Registra um novo vertical no sistema de composição
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.GetAvailableVerticalsAsync(System.Boolean,System.Threading.CancellationToken)">
+            <summary>
+            Obtém todos os verticais registrados no sistema
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.GetTenantVerticalsAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Obtém verticais ativos para um tenant específico
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.ActivateVerticalForTenantAsync(System.String,System.String,System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Ativa um vertical para um tenant
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.DeactivateVerticalForTenantAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Desativa um vertical para um tenant
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.ComposeEntityAsync``1(``0,System.Collections.Generic.IEnumerable{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Compõe uma entidade com funcionalidades de múltiplos verticais
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.ExecuteComposedOperationAsync``1(``0,System.String,System.Collections.Generic.IEnumerable{System.String},System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Executa uma operação usando serviços de múltiplos verticais
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.ResolveVerticalsForEntityAsync``1(``0,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Resolve qual vertical deve processar uma entidade baseado em suas propriedades
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.ValidateVerticalCompatibilityAsync(System.Collections.Generic.IEnumerable{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Valida se uma configuração de verticais é compatível
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.GetComposedConfigurationAsync(System.Collections.Generic.IEnumerable{System.String},System.Threading.CancellationToken)">
+            <summary>
+            Obtém configuração padrão para uma combinação de verticais
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.MigrateVerticalDataAsync(System.String,System.Collections.Generic.IEnumerable{System.String},System.Collections.Generic.IEnumerable{System.String},System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Executa migração de dados para novos verticais
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.ValidateVerticalMetadata(CoreApp.Domain.Interfaces.Services.VerticalMetadata)">
+            <summary>
+            Valida metadados do vertical
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.SimulateTenantVerticals(System.String)">
+            <summary>
+            Simula verticais do tenant para desenvolvimento
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.GetVerticalService``1(System.String)">
+            <summary>
+            Obtém serviço vertical específico
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.AnalyzeEntityPropertiesForVerticals``1(``0,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Analisa propriedades da entidade para determinar verticais aplicáveis
+            </summary>
+        </member>
+        <member name="M:CoreApp.Application.Services.VerticalCompositionService.AnalyzeVerticalDependencies(System.Collections.Generic.List{System.String},CoreApp.Domain.Interfaces.Services.VerticalCompatibilityResult,System.Threading.CancellationToken)">
+            <summary>
+            Analisa dependências e conflitos entre verticais
+            </summary>
+        </member>
+    </members>
+</doc>

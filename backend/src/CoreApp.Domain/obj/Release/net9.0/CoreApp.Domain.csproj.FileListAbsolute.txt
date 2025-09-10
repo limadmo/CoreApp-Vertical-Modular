@@ -1,0 +1,13 @@
+/home/diego/projetos/backend/src/CoreApp.Domain/bin/Release/net9.0/CoreApp.Domain.xml
+/home/diego/projetos/backend/src/CoreApp.Domain/bin/Release/net9.0/CoreApp.Domain.deps.json
+/home/diego/projetos/backend/src/CoreApp.Domain/bin/Release/net9.0/CoreApp.Domain.dll
+/home/diego/projetos/backend/src/CoreApp.Domain/bin/Release/net9.0/CoreApp.Domain.pdb
+/home/diego/projetos/backend/src/CoreApp.Domain/obj/Release/net9.0/CoreApp.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/home/diego/projetos/backend/src/CoreApp.Domain/obj/Release/net9.0/CoreApp.Domain.AssemblyInfoInputs.cache
+/home/diego/projetos/backend/src/CoreApp.Domain/obj/Release/net9.0/CoreApp.Domain.AssemblyInfo.cs
+/home/diego/projetos/backend/src/CoreApp.Domain/obj/Release/net9.0/CoreApp.Domain.csproj.CoreCompileInputs.cache
+/home/diego/projetos/backend/src/CoreApp.Domain/obj/Release/net9.0/CoreApp.Domain.sourcelink.json
+/home/diego/projetos/backend/src/CoreApp.Domain/obj/Release/net9.0/CoreApp.Domain.dll
+/home/diego/projetos/backend/src/CoreApp.Domain/obj/Release/net9.0/refint/CoreApp.Domain.dll
+/home/diego/projetos/backend/src/CoreApp.Domain/obj/Release/net9.0/CoreApp.Domain.pdb
+/home/diego/projetos/backend/src/CoreApp.Domain/obj/Release/net9.0/ref/CoreApp.Domain.dll

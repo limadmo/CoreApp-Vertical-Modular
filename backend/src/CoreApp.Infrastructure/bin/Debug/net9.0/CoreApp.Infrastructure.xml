@@ -1,0 +1,525 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>CoreApp.Infrastructure</name>
+    </assembly>
+    <members>
+        <member name="T:CoreApp.Infrastructure.Data.Context.CoreAppDbContext">
+            <summary>
+            Contexto principal do Entity Framework Core para o sistema CoreApp multi-tenant
+            Implementa isolamento automático via Global Query Filters
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.DependencyInjection">
+            <summary>
+            Configuração de injeção de dependência para infraestrutura
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.DependencyInjection.AddInfrastructureServices(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Adiciona serviços de infraestrutura
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Extensions.HttpContextExtensions">
+            <summary>
+            Extensões para HttpContext facilitando acesso a informações de tenant e usuário
+            Centraliza lógica de extração de dados do contexto HTTP multi-tenant
+            </summary>
+            <remarks>
+            Estas extensões são essenciais para o sistema SAAS farmacêutico brasileiro,
+            permitindo fácil acesso ao tenant e usuário atual em qualquer ponto da aplicação
+            </remarks>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetTenantId(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém o ID do tenant atual do contexto HTTP
+            </summary>
+            <param name="httpContext">Contexto HTTP atual</param>
+            <returns>ID do tenant ou string vazia se não encontrado</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.SetTenantId(Microsoft.AspNetCore.Http.HttpContext,System.String)">
+            <summary>
+            Define o ID do tenant no contexto HTTP
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <param name="tenantId">ID do tenant</param>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.HasTenant(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Verifica se há um tenant válido no contexto
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>True se tenant está definido</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetTenantInfo(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém informações completas do tenant atual
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>Informações do tenant ou null</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.SetTenantInfo(Microsoft.AspNetCore.Http.HttpContext,CoreApp.Infrastructure.Extensions.TenantInfo)">
+            <summary>
+            Define informações completas do tenant no contexto
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <param name="tenantInfo">Informações do tenant</param>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetCurrentUserId(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém o ID do usuário atual do contexto HTTP
+            </summary>
+            <param name="httpContext">Contexto HTTP atual</param>
+            <returns>ID do usuário ou Guid.Empty se não encontrado</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.SetCurrentUserId(Microsoft.AspNetCore.Http.HttpContext,System.Guid)">
+            <summary>
+            Define o ID do usuário no contexto HTTP
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <param name="userId">ID do usuário</param>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetCurrentUserName(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém o nome do usuário atual
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>Nome do usuário ou string vazia</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetCurrentUserEmail(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém o email do usuário atual
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>Email do usuário ou string vazia</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.IsAuthenticated(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Verifica se usuário está autenticado
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>True se usuário está autenticado</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.HasRole(Microsoft.AspNetCore.Http.HttpContext,System.String)">
+            <summary>
+            Verifica se usuário tem role específica
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <param name="role">Nome da role</param>
+            <returns>True se usuário tem a role</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetCurrentUserRoles(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém todas as roles do usuário atual
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>Lista de roles</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetCurrentUserInfo(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém informações completas do usuário atual
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>Informações do usuário ou null</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.SetCurrentUserInfo(Microsoft.AspNetCore.Http.HttpContext,CoreApp.Infrastructure.Extensions.UserInfo)">
+            <summary>
+            Define informações completas do usuário no contexto
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <param name="userInfo">Informações do usuário</param>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetClientIpAddress(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém IP real do cliente considerando proxies/load balancers
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>Endereço IP do cliente</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetUserAgent(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém User-Agent do cliente
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>User-Agent string</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.IsApiRequest(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Verifica se requisição é de API (vs browser)
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>True se é requisição de API</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.IsMobileRequest(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Verifica se requisição é mobile
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>True se é dispositivo mobile</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetSessionId(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtém ID da sessão atual
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>ID da sessão</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GetAuditContext(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Define contexto de auditoria para logs
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>Contexto de auditoria</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.IsSystemSubdomain(System.String)">
+            <summary>
+            Verifica se subdomínio é do sistema (não é tenant)
+            </summary>
+            <param name="subdomain">Subdomínio a verificar</param>
+            <returns>True se é subdomínio do sistema</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Extensions.HttpContextExtensions.GenerateSessionId(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Gera ID de sessão baseado em informações da requisição
+            </summary>
+            <param name="httpContext">Contexto HTTP</param>
+            <returns>ID único da sessão</returns>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Extensions.TenantInfo">
+            <summary>
+            Informações básicas do tenant para contexto HTTP
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Extensions.UserInfo">
+            <summary>
+            Informações básicas do usuário para contexto HTTP
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Extensions.AuditContext">
+            <summary>
+            Contexto de auditoria para logs estruturados
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Middleware.TenantResolutionMiddleware">
+            <summary>
+            Middleware para resolução automática de tenant multi-tenant
+            Intercepta requests e resolve o tenant baseado em header ou subdomínio
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Middleware.TenantResolutionMiddleware.ResolveTenant(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Resolve o tenant baseado no request HTTP
+            Ordem de prioridade: Header X-Tenant-ID > Subdomínio > Default
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Middleware.TenantResolutionMiddlewareExtensions">
+            <summary>
+            Extensões para configuração do middleware de tenant
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Middleware.TenantResolutionMiddlewareExtensions.UseTenantResolution(Microsoft.AspNetCore.Builder.IApplicationBuilder)">
+            <summary>
+            Adiciona o middleware de resolução de tenant ao pipeline
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.MultiTenant.ITenantService">
+            <summary>
+            Interface para serviço de tenant (loja/comércio) multi-tenant
+            Gerencia contexto de tenant para isolamento de dados
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.MultiTenant.ITenantService.GetCurrentTenantId">
+            <summary>
+            Obtém o ID do tenant atual
+            </summary>
+            <returns>ID do tenant ou null se não houver tenant ativo</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.MultiTenant.ITenantService.SetCurrentTenant(System.String)">
+            <summary>
+            Define o tenant atual para o contexto
+            </summary>
+            <param name="tenantId">ID do tenant</param>
+        </member>
+        <member name="M:CoreApp.Infrastructure.MultiTenant.ITenantService.HasCurrentTenant">
+            <summary>
+            Verifica se há um tenant ativo no contexto atual
+            </summary>
+            <returns>True se há tenant ativo</returns>
+        </member>
+        <member name="T:CoreApp.Infrastructure.MultiTenant.TenantService">
+            <summary>
+            Implementação do serviço de tenant multi-tenant para comércios brasileiros
+            Gerencia contexto de tenant via HttpContext
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.MultiTenant.TenantService.GetCurrentTenantId">
+            <summary>
+            Obtém o ID do tenant atual do header HTTP X-Tenant-ID
+            </summary>
+            <returns>ID do tenant ou "default" se não especificado</returns>
+        </member>
+        <member name="M:CoreApp.Infrastructure.MultiTenant.TenantService.SetCurrentTenant(System.String)">
+            <summary>
+            Define o tenant atual (usado principalmente em testes)
+            </summary>
+            <param name="tenantId">ID do tenant</param>
+        </member>
+        <member name="M:CoreApp.Infrastructure.MultiTenant.TenantService.HasCurrentTenant">
+            <summary>
+            Verifica se há um tenant válido no contexto
+            </summary>
+            <returns>True se há tenant ativo</returns>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Repositories.Base.BaseRepository`1">
+            <summary>
+            Implementação base para todos os repositórios do sistema CoreApp
+            Fornece operações CRUD básicas com suporte multi-tenant
+            </summary>
+            <typeparam name="TEntity">Tipo da entidade que implementa ITenantEntity</typeparam>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.BaseRepository`1.GetByIdAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Obtém uma entidade por ID considerando o tenant atual
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.BaseRepository`1.GetAllAsync(System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Obtém todas as entidades do tenant atual com paginação
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.BaseRepository`1.CountAsync(System.Threading.CancellationToken)">
+            <summary>
+            Conta o total de registros do tenant atual
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.BaseRepository`1.AddAsync(`0,System.Threading.CancellationToken)">
+            <summary>
+            Adiciona uma nova entidade
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.BaseRepository`1.UpdateAsync(`0,System.Threading.CancellationToken)">
+            <summary>
+            Atualiza uma entidade existente
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.BaseRepository`1.DeleteAsync(System.Guid,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Remove uma entidade por ID (exclusão lógica se implementa ISoftDeletableEntity)
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.BaseRepository`1.ExistsAsync(System.Guid,System.Threading.CancellationToken)">
+            <summary>
+            Verifica se existe uma entidade com o ID especificado
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.BaseRepository`1.SaveChangesAsync(System.Threading.CancellationToken)">
+            <summary>
+            VIOLAÇÃO DO PADRÃO UOW - Este método não deve ser usado
+            O Unit of Work deve coordenar todas as operações de SaveChanges
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1">
+            <summary>
+            Implementação do repositório para entidades com suporte a verticais de negócio
+            Estende funcionalidades básicas com operações específicas por vertical
+            </summary>
+            <typeparam name="TEntity">Tipo da entidade que implementa IVerticalEntity e ITenantEntity</typeparam>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.GetByVerticalTypeAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Obtém entidades filtradas por tipo de vertical
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.GetByVerticalPropertyAsync(System.String,System.String,System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Obtém entidades por propriedade vertical específica
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.SearchByVerticalQueryAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Busca entidades usando query específica do vertical em formato JSON
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.GetVerticalAggregationAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Obtém estatísticas agregadas por vertical
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.ValidateVerticalConsistencyAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Valida consistência das propriedades verticais
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.MigrateVerticalSchemaAsync(System.String,System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Migra entidades para nova versão do schema vertical
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.GetPendingVerticalProcessingAsync(System.String,System.String,System.Threading.CancellationToken)">
+            <summary>
+            Obtém entidades que requerem processamento específico do vertical
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.ExecuteVerticalBatchOperationAsync(System.String,System.String,System.Collections.Generic.IEnumerable{`0},System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Executa operação em lote específica do vertical
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.GetVerticalMetricsAsync(System.String,System.String,CoreApp.Domain.Interfaces.Repositories.DateRange,System.Threading.CancellationToken)">
+            <summary>
+            Obtém métricas de desempenho específicas do vertical
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.MatchesVerticalQuery(`0,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Verifica se entidade atende condições da query vertical
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.CalculateNumericAggregation(System.Collections.Generic.IEnumerable{`0},System.String,System.Func{System.Collections.Generic.IEnumerable{System.Decimal},System.Decimal})">
+            <summary>
+            Calcula agregação numérica para propriedade vertical
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.MigrateEntitySchema(`0,System.String,System.String)">
+            <summary>
+            Migra schema de uma entidade específica
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.RequiresProcessing(`0,System.String)">
+            <summary>
+            Verifica se entidade requer processamento específico
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.ExecuteVerticalOperation(`0,System.String,System.Collections.Generic.Dictionary{System.String,System.Object},System.Threading.CancellationToken)">
+            <summary>
+            Executa operação vertical específica em uma entidade
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Repositories.Base.VerticalRepository`1.CalculateVerticalMetrics(CoreApp.Domain.Interfaces.Repositories.VerticalMetrics,System.Threading.CancellationToken)">
+            <summary>
+            Calcula métricas específicas do vertical
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Repositories.ITenantModuloRepository">
+            <summary>
+            Interface para repositório de módulos por tenant
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.Services.TenantContext">
+            <summary>
+            Implementação básica do contexto de tenant
+            Obtém informações do tenant atual via header HTTP ou subdomain
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Services.TenantContext.GetCurrentTenantId">
+            <summary>
+            Obtém o ID do tenant atual do header ou subdomain
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Services.TenantContext.GetCurrentUserId">
+            <summary>
+            Obtém o ID do usuário atual do claims ou header
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Services.TenantContext.SetCurrentTenant(System.String)">
+            <summary>
+            Define o tenant atual (usado para override em testes ou situações especiais)
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Services.TenantContext.SetCurrentUser(System.String)">
+            <summary>
+            Define o usuário atual (usado para override em testes ou situações especiais)
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Services.TenantContext.HasTenant">
+            <summary>
+            Verifica se há um tenant definido
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.Services.TenantContext.HasUser">
+            <summary>
+            Verifica se há um usuário definido
+            </summary>
+        </member>
+        <member name="T:CoreApp.Infrastructure.UnitOfWork.UnitOfWork">
+            <summary>
+            Implementação estado da arte do Unit of Work para coordenação transacional completa
+            Gerencia repositórios, transações e operações entre múltiplos verticais de negócio
+            </summary>
+            <remarks>
+            Implementa padrão UoW conforme CLAUDE.md para evitar SaveChanges direto nos repositórios
+            e coordenar operações entre diferentes verticais com controle transacional robusto
+            </remarks>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.Repository``1">
+            <summary>
+            Obtém repositório base com cache automático
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.VerticalRepository``1">
+            <summary>
+            Obtém repositório vertical com cache automático
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.BeginTransactionAsync(System.Threading.CancellationToken)">
+            <summary>
+            Inicia nova transação com isolamento adequado
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.CommitAsync(System.Threading.CancellationToken)">
+            <summary>
+            Confirma mudanças pendentes com auditoria completa
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.CommitTransactionAsync(System.Threading.CancellationToken)">
+            <summary>
+            Confirma transação atual se existir
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.RollbackTransactionAsync(System.Threading.CancellationToken)">
+            <summary>
+            Reverte transação com logging detalhado
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.ExecuteInTransactionAsync``1(System.Func{System.Threading.Tasks.Task{``0}},System.Threading.CancellationToken)">
+            <summary>
+            Executa operação em transação isolada com rollback automático
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.ExecuteInTransactionAsync(System.Func{System.Threading.Tasks.Task},System.Threading.CancellationToken)">
+            <summary>
+            Executa operação em transação isolada sem retorno
+            </summary>
+        </member>
+        <member name="P:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.HasActiveTransaction">
+            <summary>
+            Verifica se existe transação ativa
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.GetStatistics">
+            <summary>
+            Obtém estatísticas atualizadas da sessão
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.ClearRepositoryCache">
+            <summary>
+            Limpa cache de repositórios
+            </summary>
+        </member>
+        <member name="E:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.TransactionStarted">
+            <summary>
+            Eventos de transação
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.DisposeTransactionAsync">
+            <summary>
+            Libera transação atual
+            </summary>
+        </member>
+        <member name="M:CoreApp.Infrastructure.UnitOfWork.UnitOfWork.Dispose">
+            <summary>
+            Dispose com cleanup completo
+            </summary>
+        </member>
+    </members>
+</doc>
