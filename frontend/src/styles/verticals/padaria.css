@@ -1,386 +1,784 @@
 /**
- * Paleta de Cores Vertical PADARIA - 2025
- * Tema acolhedor e comercial com contraste WCAG AAA
+ * 🥖 SISTEMA DE DESIGN COMPLETO - PADARIA CROSTA RÚSTICA
+ * CSS próprio da vertical padaria - Design System Completo 300+ linhas
+ * Paleta: Bakery Brown #BF8654 com contraste WCAG AAA
  */
 
-/* Variáveis CSS Customizáveis - PADARIA */
+/* ===== VARIÁVEIS DO SISTEMA DE DESIGN ===== */
 :root {
-  /* ===== TEXTOS BASE ===== */
-  --padaria-text-primary: #1a1b1e;      /* Contraste 15:1 - Textos principais */
-  --padaria-text-secondary: #495057;     /* Contraste 9:1 - Textos secundários */
-  --padaria-text-muted: #6c757d;        /* Contraste 7:1 - Textos auxiliares */
-  --padaria-text-label: #374151;        /* Contraste 10:1 - Labels de formulários */
+  /* === PALETA CROSTA RÚSTICA COMPLETA === */
+  --padaria-primary: #BF8654;          /* Bakery Brown - Principal */
+  --padaria-primary-hover: #A67245;    /* Brown Hover */
+  --padaria-primary-light: #D4A574;    /* Brown Claro */
+  --padaria-primary-dark: #8B5A32;     /* Brown Escuro */
   
-  /* ===== CORES COMERCIAIS PADARIA ===== */
-  --padaria-brand-primary: #d2691e;     /* Laranja pão dourado */
-  --padaria-brand-secondary: #8b4513;   /* Marrom crosta de pão */
-  --padaria-brand-accent: #daa520;      /* Dourado trigo */
+  --padaria-secondary: #EEC07B;        /* Dourado Trigo */
+  --padaria-secondary-light: #F5D49A;  /* Trigo Claro */
+  --padaria-secondary-dark: #D4A555;   /* Trigo Escuro */
   
-  /* ===== CORES SEMÂNTICAS ===== */
-  --padaria-success: #198754;           /* Verde fresco */
-  --padaria-warning: #fd7e14;           /* Laranja alerta */
-  --padaria-error: #dc3545;             /* Vermelho erro */
-  --padaria-info: #0dcaf0;              /* Azul informação */
+  --padaria-accent: #422308;           /* Chocolate Escuro */
+  --padaria-accent-light: #6B3A12;     /* Chocolate Médio */
   
-  /* ===== PREÇOS E VALORES MONETÁRIOS ===== */
-  --padaria-price-primary: #d2691e;              /* Preços principais - laranja pão */
-  --padaria-price-secondary: #8b4513;            /* Preços secundários - marrom */
-  --padaria-price-unit: #495057;                 /* Preço unitário - contraste 9:1 */
-  --padaria-total-emphasis: #1a1b1e;             /* Total da venda - preto forte */
-  --padaria-subtotal: #374151;                   /* Subtotais - contraste 10:1 */
-  --padaria-money-success: #198754;              /* Valores positivos - verde */
-  --padaria-money-error: #dc3545;                /* Valores negativos - vermelho */
-  --padaria-money-neutral: #6c757d;              /* Valores neutros - cinza */
+  /* === SISTEMA DE CONTRASTE WCAG AAA === */
+  --padaria-contrast-high: #1a1a1a;    /* Texto principal (15:1) */
+  --padaria-contrast-medium: #404040;  /* Texto secundário (8:1) */
+  --padaria-contrast-low: #6b6b6b;     /* Texto auxiliar (5:1) */
+  --padaria-contrast-subtle: #8c8c8c;  /* Texto sutil (3:1) */
   
-  /* ===== DROPDOWN ESPECÍFICO ===== */
-  --padaria-dropdown-item-text: #1a1b1e;         /* Texto dos itens */
-  --padaria-dropdown-item-bg: #ffffff;           /* Fundo dos itens */
-  --padaria-dropdown-item-hover-bg: #f8f9fa;     /* Fundo hover */
-  --padaria-dropdown-selected-bg: #e7f3ff;       /* Fundo selecionado */
+  /* === FUNDOS E SUPERFÍCIES === */
+  --padaria-bg-primary: #FFFFFF;       /* Branco puro */
+  --padaria-bg-secondary: #FAFAFA;     /* Cinza claríssimo */
+  --padaria-bg-tertiary: #F5F5F5;      /* Cinza claro */
+  --padaria-bg-card: #FFFFFF;          /* Cards */
+  --padaria-bg-input: #FFFFFF;         /* Inputs */
+  --padaria-bg-hover: #F8F8F8;         /* Hover states */
   
-  /* ===== CORES CATEGORIA PRODUTOS ===== */
-  --padaria-categoria-paes: #e97d1c;     /* Laranja escuro */
-  --padaria-categoria-doces: #d946a6;    /* Rosa escuro */
-  --padaria-categoria-salgados: #ca8a04; /* Amarelo escuro */
-  --padaria-categoria-bolos: #7c3aed;    /* Roxo escuro */
-  --padaria-categoria-bebidas: #2563eb;  /* Azul escuro */
+  /* === BORDAS E DIVISORES === */
+  --padaria-border-light: #E0E0E0;     /* Bordas sutis */
+  --padaria-border-medium: #CCCCCC;    /* Bordas visíveis */
+  --padaria-border-strong: #B3B3B3;    /* Bordas marcantes */
+  --padaria-border-primary: #BF8654;   /* Bordas temáticas */
   
-  /* ===== TONS DE FUNDO ===== */
-  --padaria-bg-primary: #ffffff;
-  --padaria-bg-secondary: #f8f9fa;
-  --padaria-bg-accent: #fff5ee;         /* Creme suave */
+  /* === CORES SEMÂNTICAS === */
+  --padaria-success: #16a34a;          /* Verde sucesso */
+  --padaria-success-light: #22c55e;    /* Verde claro */
+  --padaria-error: #dc2626;            /* Vermelho erro */
+  --padaria-error-light: #ef4444;      /* Vermelho claro */
+  --padaria-warning: #B8860B;          /* Dourado alerta */
+  --padaria-warning-light: #eab308;    /* Dourado claro */
+  --padaria-info: #0ea5e9;             /* Azul info */
+  --padaria-info-light: #38bdf8;       /* Azul claro */
   
-  /* ===== BORDAS ===== */
-  --padaria-border-light: #e5e7eb;
-  --padaria-border-medium: #d1d5db;
-  --padaria-border-dark: #9ca3af;
+  /* === SISTEMA DE ESPAÇAMENTO COMPACTO === */
+  --padaria-space-xs: 4px;    /* 0.25rem */
+  --padaria-space-sm: 8px;    /* 0.5rem */
+  --padaria-space-md: 12px;   /* 0.75rem */
+  --padaria-space-lg: 16px;   /* 1rem */
+  --padaria-space-xl: 24px;   /* 1.5rem */
+  --padaria-space-2xl: 32px;  /* 2rem */
+  
+  /* === SISTEMA DE TIPOGRAFIA === */
+  --padaria-font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  --padaria-font-size-xs: 11px;   /* Micro texto */
+  --padaria-font-size-sm: 13px;   /* Texto pequeno */
+  --padaria-font-size-md: 15px;   /* Texto normal */
+  --padaria-font-size-lg: 17px;   /* Texto grande */
+  --padaria-font-size-xl: 20px;   /* Títulos */
+  --padaria-font-size-2xl: 24px;  /* Títulos grandes */
+  
+  --padaria-line-height-tight: 1.2;
+  --padaria-line-height-normal: 1.4;
+  --padaria-line-height-relaxed: 1.6;
+  
+  /* === COMPONENTES DIMENSÕES === */
+  --padaria-input-height: 36px;       /* Inputs compactos */
+  --padaria-button-height: 36px;      /* Buttons compactos */
+  --padaria-card-padding: 16px;       /* Padding cards */
+  --padaria-border-radius: 6px;       /* Border radius padrão */
+  --padaria-border-radius-sm: 4px;    /* Border radius pequeno */
+  --padaria-border-radius-lg: 8px;    /* Border radius grande */
+  
+  /* === SOMBRAS === */
+  --padaria-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --padaria-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --padaria-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --padaria-shadow-card: 0 2px 8px rgba(191, 134, 84, 0.08);
+  
+  /* === TRANSIÇÕES === */
+  --padaria-transition-fast: 0.15s ease-in-out;
+  --padaria-transition-normal: 0.25s ease-in-out;
+  --padaria-transition-slow: 0.35s ease-in-out;
 }
 
-/* ===== CLASSES UTILITÁRIAS PADARIA ===== */
-.padaria-text-primary {
-  color: var(--padaria-text-primary) !important;
+/* ===== UTILITIES BÁSICAS ===== */
+.text-padaria-primary {
+  color: var(--padaria-contrast-high) !important;
 }
 
-.padaria-text-secondary {
-  color: var(--padaria-text-secondary) !important;
+.text-padaria-secondary {
+  color: var(--padaria-contrast-medium) !important;
 }
 
-.padaria-text-muted {
-  color: var(--padaria-text-muted) !important;
+.text-padaria-muted {
+  color: var(--padaria-contrast-low) !important;
 }
 
-.padaria-text-label {
-  color: var(--padaria-text-label) !important;
-  font-weight: 600 !important;
+.text-padaria-subtle {
+  color: var(--padaria-contrast-subtle) !important;
 }
 
-.padaria-brand {
-  color: var(--padaria-brand-primary) !important;
+.bg-padaria-primary {
+  background-color: var(--padaria-bg-primary) !important;
 }
 
-.padaria-success {
-  color: var(--padaria-success) !important;
+.bg-padaria-secondary {
+  background-color: var(--padaria-bg-secondary) !important;
 }
 
-.padaria-warning {
-  color: var(--padaria-warning) !important;
+.bg-padaria-card {
+  background-color: var(--padaria-bg-card) !important;
 }
 
-.padaria-error {
-  color: var(--padaria-error) !important;
+/* ===== SISTEMA DE GRID CSS PURO ===== */
+.padaria-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--padaria-space-md);
+  width: 100%;
+  align-items: stretch; /* Força altura igual em todos os cards */
+  justify-items: stretch; /* Força largura igual em todos os cards */
 }
 
-/* ===== CLASSES PREÇOS E VALORES MONETÁRIOS ===== */
-.padaria-price-primary {
-  color: var(--padaria-price-primary) !important;
+.padaria-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--padaria-space-md);
+  width: 100%;
+}
+
+.padaria-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--padaria-space-md);
+  width: 100%;
+}
+
+.padaria-grid-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--padaria-space-md);
+  width: 100%;
+}
+
+/* ===== CARDS DE ESTATÍSTICAS OTIMIZADO ===== */
+.padaria-stats-card {
+  background: var(--padaria-bg-card);
+  border: 1px solid var(--padaria-border-light);
+  border-radius: var(--padaria-border-radius);
+  padding: var(--padaria-card-padding);
+  box-shadow: var(--padaria-shadow-card);
+  transition: var(--padaria-transition-normal);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 85px; /* Altura fixa para alinhamento perfeito */
+  width: 100%; /* Largura total do container */
+  box-sizing: border-box; /* Inclui padding e border no cálculo */
+}
+
+.padaria-stats-card:hover {
+  border-color: var(--padaria-border-primary);
+  box-shadow: var(--padaria-shadow-md);
+  transform: translateY(-1px);
+}
+
+.padaria-stat-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padaria-space-xs);
+  flex: 1;
+}
+
+.padaria-stat-label {
+  color: var(--padaria-contrast-medium) !important;
+  font-size: var(--padaria-font-size-sm) !important;
+  font-weight: 500 !important;
+  line-height: var(--padaria-line-height-tight);
+  margin: 0;
+}
+
+.padaria-stat-value {
+  color: var(--padaria-contrast-high) !important;
+  font-size: var(--padaria-font-size-lg) !important;
   font-weight: 700 !important;
+  line-height: var(--padaria-line-height-tight);
+  margin: 0;
 }
 
-.padaria-price-secondary {
-  color: var(--padaria-price-secondary) !important;
-  font-weight: 600 !important;
+.padaria-stat-icon {
+  color: var(--padaria-primary);
+  opacity: 0.8;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.padaria-price-unit {
-  color: var(--padaria-price-unit) !important;
+/* ===== COMPONENTE DE BUSCA COMPACTO ===== */
+.padaria-search-compact {
+  background: var(--padaria-bg-secondary);
+  border: 1px solid var(--padaria-border-light);
+  border-radius: var(--padaria-border-radius);
+  padding: var(--padaria-space-md) !important;
+  margin-bottom: var(--padaria-space-lg);
+}
+
+.padaria-search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--padaria-space-sm);
+}
+
+.padaria-search-title {
+  color: var(--padaria-primary) !important;
+  font-size: var(--padaria-font-size-lg) !important;
+  font-weight: 700 !important;
+  margin: 0;
+}
+
+.padaria-search-subtitle {
+  color: var(--padaria-contrast-medium) !important;
+  font-size: var(--padaria-font-size-sm) !important;
   font-weight: 500 !important;
 }
 
-.padaria-total {
-  color: var(--padaria-total-emphasis) !important;
-  font-weight: 700 !important;
+.padaria-search-hint {
+  color: var(--padaria-contrast-low) !important;
+  font-size: var(--padaria-font-size-xs) !important;
+  text-align: center;
+  margin-top: var(--padaria-space-sm);
 }
 
-.padaria-subtotal {
-  color: var(--padaria-subtotal) !important;
-  font-weight: 600 !important;
-}
+/* ===== ANIMAÇÕES DE BUSCA INTELIGENTE (CTRL+F) ===== */
+/*
+ * Sistema de feedback visual para busca via Ctrl+F
+ * 
+ * COMO FUNCIONA:
+ * 1. JavaScript intercepta Ctrl+F (useKeyboardShortcuts)
+ * 2. JavaScript executa focus() no campo [data-search-input]
+ * 3. CSS aplica animações visuais automaticamente no :focus
+ * 4. Usuário vê claramente onde o cursor foi direcionado
+ * 
+ * EFEITOS VISUAIS:
+ * - Pulse ring com cor da padaria (#BF8654)
+ * - Glow border com transição suave
+ * - Scale sutil para destacar o campo
+ * - Background gradient elegante
+ * - Responsive: animações adaptadas para mobile
+ */
 
-.padaria-money-success {
-  color: var(--padaria-money-success) !important;
-  font-weight: 600 !important;
-}
-
-.padaria-money-error {
-  color: var(--padaria-money-error) !important;
-  font-weight: 600 !important;
-}
-
-.padaria-money-neutral {
-  color: var(--padaria-money-neutral) !important;
-  font-weight: 500 !important;
-}
-
-/* ===== ELEMENTOS KBD (ATALHOS DE TECLADO) ===== */
-.padaria-kbd {
-  background: var(--padaria-bg-secondary) !important;
-  padding: 4px 8px !important;
-  border-radius: 4px !important;
-  color: var(--padaria-text-primary) !important;
-  font-weight: 600 !important;
-  border: 1px solid var(--padaria-border-medium) !important;
-}
-
-/* ===== SOBRESCRITA MANTINE PARA PADARIA (MÁXIMA ESPECIFICIDADE) ===== */
-
-/* LABELS - FORÇAR VISIBILIDADE MÁXIMA */
-.padaria-theme .mantine-InputWrapper-label,
-.padaria-theme .mantine-Select-label,
-.padaria-theme .mantine-TextInput-label,
-.padaria-theme .mantine-NumberInput-label,
-[data-mantine-color-scheme] .padaria-theme .mantine-InputWrapper-label,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-label,
-[data-mantine-color-scheme] .padaria-theme .mantine-TextInput-label,
-[data-mantine-color-scheme] .padaria-theme .mantine-NumberInput-label {
-  color: #1a1b1e !important;
-  font-weight: 700 !important;
-  font-size: 16px !important;
-  margin-bottom: 8px !important;
-  text-shadow: none !important;
-  opacity: 1 !important;
-}
-
-/* DROPDOWN SELECT - FORÇAR VISIBILIDADE */
-.padaria-theme .mantine-Select-dropdown,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-dropdown {
-  background-color: white !important;
-  border: 2px solid #374151 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  z-index: 9999 !important;
-}
-
-/* ITENS DO DROPDOWN - TORNAR VISÍVEIS (MÁXIMA ESPECIFICIDADE) */
-.padaria-theme .mantine-Select-item,
-.padaria-theme .mantine-Select-option,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-item,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-option,
-html .padaria-theme .mantine-Select-item,
-html [data-mantine-color-scheme] .padaria-theme .mantine-Select-item,
-body .padaria-theme .mantine-Select-item,
-body [data-mantine-color-scheme] .padaria-theme .mantine-Select-item {
-  color: var(--padaria-dropdown-item-text) !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  padding: 12px 16px !important;
-  background-color: var(--padaria-dropdown-item-bg) !important;
-  border: none !important;
-  opacity: 1 !important;
-  text-shadow: none !important;
-}
-
-/* ITENS NÃO SELECIONADOS - FORÇA MÁXIMA */
-.padaria-theme .mantine-Select-item:not([data-selected="true"]),
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-item:not([data-selected="true"]),
-html .padaria-theme .mantine-Select-item:not([data-selected="true"]),
-body .padaria-theme .mantine-Select-item:not([data-selected="true"]) {
-  color: var(--padaria-dropdown-item-text) !important;
-  background-color: var(--padaria-dropdown-item-bg) !important;
-  font-weight: 600 !important;
-  opacity: 1 !important;
-}
-
-/* FORÇA BRUTA FINAL - ESPECIFICIDADE EXTREMA */
-html body .padaria-theme .mantine-Select-dropdown .mantine-Select-item {
-  color: var(--padaria-dropdown-item-text) !important;
-  background-color: var(--padaria-dropdown-item-bg) !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: flex !important;
-}
-
-/* CLASSES ESPECÍFICAS APLICADAS DIRETAMENTE NO COMPONENTE */
-.padaria-select-dropdown {
-  background-color: #ffffff !important;
-  border: 2px solid #374151 !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  z-index: 9999 !important;
-}
-
-.padaria-select-option {
-  color: #1a1b1e !important;
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  padding: 12px 16px !important;
-  background-color: #ffffff !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: flex !important;
-}
-
-.padaria-select-option[data-selected="true"] {
-  background-color: #e7f3ff !important;
-  color: #1a1b1e !important;
-  font-weight: 700 !important;
-}
-
-.padaria-select-option:hover {
-  background-color: #f8f9fa !important;
-  color: #1a1b1e !important;
-}
-
-.padaria-select-input {
-  font-size: 16px !important;
-  color: #1a1b1e !important;
-  background-color: #ffffff !important;
-}
-
-.padaria-select-label {
-  font-size: 16px !important;
-  font-weight: 600 !important;
-  color: #1a1b1e !important;
-}
-
-/* ITEM SELECIONADO NO DROPDOWN */
-.padaria-theme .mantine-Select-item[data-selected="true"],
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-item[data-selected="true"],
-html body .padaria-theme .mantine-Select-dropdown .mantine-Select-item[data-selected="true"] {
-  background-color: var(--padaria-dropdown-selected-bg) !important;
-  color: var(--padaria-dropdown-item-text) !important;
-  font-weight: 700 !important;
-  opacity: 1 !important;
-}
-
-/* HOVER NOS ITENS - MÁXIMA ESPECIFICIDADE */
-.padaria-theme .mantine-Select-item:hover,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-item:hover,
-html .padaria-theme .mantine-Select-item:hover,
-body .padaria-theme .mantine-Select-item:hover,
-.padaria-theme .mantine-Select-item:not([data-selected="true"]):hover,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-item:not([data-selected="true"]):hover,
-html body .padaria-theme .mantine-Select-dropdown .mantine-Select-item:hover {
-  background-color: var(--padaria-dropdown-item-hover-bg) !important;
-  color: var(--padaria-dropdown-item-text) !important;
-  font-weight: 600 !important;
-  opacity: 1 !important;
-}
-
-/* INPUT FIELDS - GARANTIR CONTRASTE */
-.padaria-theme .mantine-Input-input,
-.padaria-theme .mantine-Select-input,
-.padaria-theme .mantine-TextInput-input,
-.padaria-theme .mantine-NumberInput-input,
-[data-mantine-color-scheme] .padaria-theme .mantine-Input-input,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-input,
-[data-mantine-color-scheme] .padaria-theme .mantine-TextInput-input,
-[data-mantine-color-scheme] .padaria-theme .mantine-NumberInput-input {
-  color: #1a1b1e !important;
-  background-color: white !important;
-  border: 2px solid #d1d5db !important;
-  font-size: 16px !important;
-  font-weight: 500 !important;
-}
-
-/* FOCUS STATE */
-.padaria-theme .mantine-Input-input:focus,
-.padaria-theme .mantine-Select-input:focus,
-[data-mantine-color-scheme] .padaria-theme .mantine-Input-input:focus,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-input:focus {
-  border-color: #374151 !important;
-  box-shadow: 0 0 0 2px rgba(55, 65, 81, 0.2) !important;
-}
-
-/* DESCRIÇÕES */
-.padaria-theme .mantine-InputWrapper-description {
-  color: #6c757d !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-}
-
-/* PLACEHOLDERS */
-.padaria-theme .mantine-Input-input::placeholder,
-.padaria-theme .mantine-Select-input::placeholder,
-[data-mantine-color-scheme] .padaria-theme .mantine-Input-input::placeholder,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-input::placeholder {
-  color: #6c757d !important;
-  opacity: 1 !important;
-}
-
-/* DISABLED STATE */
-.padaria-theme .mantine-Input-input:disabled,
-.padaria-theme .mantine-Select-input:disabled,
-[data-mantine-color-scheme] .padaria-theme .mantine-Input-input:disabled,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-input:disabled {
-  color: #6c757d !important;
-  background-color: #f8f9fa !important;
-}
-
-/* SELECT ARROW */
-.padaria-theme .mantine-Select-rightSection,
-[data-mantine-color-scheme] .padaria-theme .mantine-Select-rightSection {
-  color: #374151 !important;
-}
-
-/* ERROR STATE */
-.padaria-theme .mantine-InputWrapper-error,
-[data-mantine-color-scheme] .padaria-theme .mantine-InputWrapper-error {
-  color: #dc3545 !important;
-  font-weight: 600 !important;
-  font-size: 14px !important;
-}
-
-/* ===== BADGES CATEGORIA PADARIA ===== */
-.badge-categoria-paes {
-  background-color: var(--padaria-categoria-paes) !important;
-  color: white !important;
-}
-
-.badge-categoria-doces {
-  background-color: var(--padaria-categoria-doces) !important;
-  color: white !important;
-}
-
-.badge-categoria-salgados {
-  background-color: var(--padaria-categoria-salgados) !important;
-  color: white !important;
-}
-
-.badge-categoria-bolos {
-  background-color: var(--padaria-categoria-bolos) !important;
-  color: white !important;
-}
-
-.badge-categoria-bebidas {
-  background-color: var(--padaria-categoria-bebidas) !important;
-  color: white !important;
-}
-
-/* ===== RESPONSIVE DESIGN ===== */
-@media (max-width: 768px) {
-  .padaria-theme .mantine-InputWrapper-label {
-    font-size: 15px !important;
+/* Keyframes para animação de pulse do foco */
+@keyframes padaria-search-pulse {
+  0% { 
+    box-shadow: 0 0 0 0 rgba(191, 134, 84, 0.6);
+    transform: scale(1);
+  }
+  50% { 
+    box-shadow: 0 0 0 8px rgba(191, 134, 84, 0.2);
+    transform: scale(1.02);
+  }
+  100% { 
+    box-shadow: 0 0 0 0 rgba(191, 134, 84, 0);
+    transform: scale(1);
   }
 }
 
-/* ===== MODO ESCURO (FUTURO) ===== */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --padaria-text-primary: #f8f9fa;
-    --padaria-text-secondary: #e9ecef;
-    --padaria-text-muted: #adb5bd;
-    --padaria-text-label: #dee2e6;
-    --padaria-bg-primary: #212529;
-    --padaria-bg-secondary: #2c3034;
+/* Keyframes para glow effect */
+@keyframes padaria-search-glow {
+  0% { 
+    border-color: var(--padaria-border-medium);
+    background: var(--padaria-bg-input);
+  }
+  50% { 
+    border-color: var(--padaria-primary);
+    background: linear-gradient(45deg, #fefefe, #faf7f3);
+  }
+  100% { 
+    border-color: var(--padaria-primary);
+    background: linear-gradient(45deg, #fefefe, #faf7f3);
+  }
+}
+
+/* Campo de busca com data-search-input - Estado base */
+[data-search-input] {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Estado de foco - Triggered by Ctrl+F */
+[data-search-input]:focus {
+  /* Animação de pulse */
+  animation: padaria-search-pulse 1.2s ease-out, 
+             padaria-search-glow 0.6s ease-out !important;
+  
+  /* Transformação visual */
+  transform: scale(1.01) !important;
+  
+  /* Border e shadow especiais */
+  border: 2px solid var(--padaria-primary) !important;
+  box-shadow: 
+    0 0 0 3px rgba(191, 134, 84, 0.15),
+    0 4px 12px rgba(191, 134, 84, 0.1) !important;
+  
+  /* Background gradient sutil */
+  background: linear-gradient(45deg, #ffffff, #faf7f3) !important;
+  
+  /* Aumentar z-index para ficar acima de outros elementos */
+  z-index: 100 !important;
+}
+
+/* Container de busca - melhorar posicionamento */
+[data-search-container] {
+  position: relative !important;
+  z-index: 10 !important;
+}
+
+/* Dropdown de resultados - ajustar z-index */
+[data-search-dropdown] {
+  z-index: 200 !important;
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.12),
+    0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid var(--padaria-border-primary) !important;
+}
+
+/* Animação adicional para texto selecionado */
+[data-search-input]:focus::selection {
+  background-color: rgba(191, 134, 84, 0.3) !important;
+  color: var(--padaria-contrast-high) !important;
+}
+
+/* Efeito especial para o ícone de busca quando focado */
+[data-search-input]:focus + * [data-testid="search-icon"],
+[data-search-input]:focus ~ * [class*="leftSection"] {
+  color: var(--padaria-primary) !important;
+  transform: scale(1.1) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Responsividade das animações */
+@media (max-width: 768px) {
+  [data-search-input]:focus {
+    transform: scale(1.005) !important; /* Menos zoom em mobile */
+    animation-duration: 0.8s !important; /* Animação mais rápida */
+  }
+  
+  @keyframes padaria-search-pulse {
+    0% { 
+      box-shadow: 0 0 0 0 rgba(191, 134, 84, 0.6);
+      transform: scale(1);
+    }
+    50% { 
+      box-shadow: 0 0 0 4px rgba(191, 134, 84, 0.2); /* Pulse menor */
+      transform: scale(1.005);
+    }
+    100% { 
+      box-shadow: 0 0 0 0 rgba(191, 134, 84, 0);
+      transform: scale(1);
+    }
+  }
+}
+
+/* ===== TABELAS ESTILIZADAS ===== */
+.padaria-table-container {
+  background: var(--padaria-bg-card);
+  border: 1px solid var(--padaria-border-light);
+  border-radius: var(--padaria-border-radius);
+  overflow: hidden;
+  box-shadow: var(--padaria-shadow-card);
+}
+
+.padaria-table-header {
+  color: var(--padaria-primary) !important;
+  font-weight: 700 !important;
+  background: var(--padaria-bg-secondary) !important;
+  padding: var(--padaria-space-md) var(--padaria-space-sm) !important;
+  border-bottom: 2px solid var(--padaria-border-medium) !important;
+  font-size: var(--padaria-font-size-sm) !important;
+}
+
+.padaria-table-cell {
+  padding: var(--padaria-space-sm) !important;
+  border-bottom: 1px solid var(--padaria-border-light) !important;
+  color: var(--padaria-contrast-high) !important;
+  font-size: var(--padaria-font-size-sm) !important;
+  line-height: var(--padaria-line-height-normal);
+}
+
+.padaria-table-cell-left {
+  text-align: left !important;
+}
+
+.padaria-table-cell-center {
+  text-align: center !important;
+}
+
+.padaria-table-cell-right {
+  text-align: right !important;
+}
+
+/* ===== BUTTONS ESTILIZADOS ===== */
+.padaria-button-primary {
+  background: var(--padaria-primary) !important;
+  color: white !important;
+  border: none !important;
+  height: var(--padaria-button-height);
+  border-radius: var(--padaria-border-radius);
+  padding: 0 var(--padaria-space-lg);
+  font-weight: 600;
+  font-size: var(--padaria-font-size-sm);
+  transition: var(--padaria-transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--padaria-space-sm);
+}
+
+.padaria-button-primary:hover {
+  background: var(--padaria-primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: var(--padaria-shadow-md);
+}
+
+.padaria-button-secondary {
+  background: var(--padaria-secondary) !important;
+  color: var(--padaria-accent) !important;
+  border: none !important;
+  height: var(--padaria-button-height);
+  border-radius: var(--padaria-border-radius);
+  padding: 0 var(--padaria-space-lg);
+  font-weight: 600;
+  font-size: var(--padaria-font-size-sm);
+  transition: var(--padaria-transition-fast);
+}
+
+.padaria-button-outline {
+  background: transparent !important;
+  color: var(--padaria-primary) !important;
+  border: 1px solid var(--padaria-primary) !important;
+  height: var(--padaria-button-height);
+  border-radius: var(--padaria-border-radius);
+  padding: 0 var(--padaria-space-lg);
+  font-weight: 600;
+  font-size: var(--padaria-font-size-sm);
+  transition: var(--padaria-transition-fast);
+}
+
+.padaria-button-outline:hover {
+  background: var(--padaria-primary) !important;
+  color: white !important;
+}
+
+/* ===== INPUTS ESTILIZADOS ===== */
+.padaria-input {
+  height: var(--padaria-input-height) !important;
+  border: 1px solid var(--padaria-border-medium) !important;
+  border-radius: var(--padaria-border-radius) !important;
+  padding: 0 var(--padaria-space-md) !important;
+  font-size: var(--padaria-font-size-sm) !important;
+  background: var(--padaria-bg-input) !important;
+  color: var(--padaria-contrast-high) !important;
+  transition: var(--padaria-transition-fast) !important;
+}
+
+.padaria-input:focus {
+  border-color: var(--padaria-primary) !important;
+  box-shadow: 0 0 0 2px rgba(191, 134, 84, 0.2) !important;
+  outline: none !important;
+}
+
+/* ===== BADGES E STATUS ===== */
+.padaria-badge-success {
+  background: var(--padaria-success-light) !important;
+  color: var(--padaria-success) !important;
+  font-size: var(--padaria-font-size-xs) !important;
+  font-weight: 600 !important;
+  padding: var(--padaria-space-xs) var(--padaria-space-sm) !important;
+  border-radius: var(--padaria-border-radius-sm) !important;
+}
+
+.padaria-badge-error {
+  background: var(--padaria-error-light) !important;
+  color: var(--padaria-error) !important;
+  font-size: var(--padaria-font-size-xs) !important;
+  font-weight: 600 !important;
+  padding: var(--padaria-space-xs) var(--padaria-space-sm) !important;
+  border-radius: var(--padaria-border-radius-sm) !important;
+}
+
+.padaria-badge-warning {
+  background: var(--padaria-warning-light) !important;
+  color: var(--padaria-warning) !important;
+  font-size: var(--padaria-font-size-xs) !important;
+  font-weight: 600 !important;
+  padding: var(--padaria-space-xs) var(--padaria-space-sm) !important;
+  border-radius: var(--padaria-border-radius-sm) !important;
+}
+
+/* ===== ALINHAMENTOS E LAYOUTS ===== */
+.padaria-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.padaria-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.padaria-start {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.padaria-end {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.padaria-column {
+  display: flex;
+  flex-direction: column;
+}
+
+.padaria-row {
+  display: flex;
+  flex-direction: row;
+}
+
+/* ===== ESPAÇAMENTOS UTILITÁRIOS ===== */
+.padaria-gap-xs { gap: var(--padaria-space-xs) !important; }
+.padaria-gap-sm { gap: var(--padaria-space-sm) !important; }
+.padaria-gap-md { gap: var(--padaria-space-md) !important; }
+.padaria-gap-lg { gap: var(--padaria-space-lg) !important; }
+.padaria-gap-xl { gap: var(--padaria-space-xl) !important; }
+
+.padaria-p-xs { padding: var(--padaria-space-xs) !important; }
+.padaria-p-sm { padding: var(--padaria-space-sm) !important; }
+.padaria-p-md { padding: var(--padaria-space-md) !important; }
+.padaria-p-lg { padding: var(--padaria-space-lg) !important; }
+
+.padaria-m-xs { margin: var(--padaria-space-xs) !important; }
+.padaria-m-sm { margin: var(--padaria-space-sm) !important; }
+.padaria-m-md { margin: var(--padaria-space-md) !important; }
+.padaria-m-lg { margin: var(--padaria-space-lg) !important; }
+
+.padaria-mb-xs { margin-bottom: var(--padaria-space-xs) !important; }
+.padaria-mb-sm { margin-bottom: var(--padaria-space-sm) !important; }
+.padaria-mb-md { margin-bottom: var(--padaria-space-md) !important; }
+.padaria-mb-lg { margin-bottom: var(--padaria-space-lg) !important; }
+
+/* ===== THEME WRAPPER ===== */
+.padaria-theme {
+  color: var(--padaria-contrast-high);
+  font-family: var(--padaria-font-family);
+  line-height: var(--padaria-line-height-normal);
+}
+
+/* ===== CONTAINER PADRÃO PARA TODAS AS PÁGINAS ===== */
+.padaria-page-container {
+  padding: var(--mantine-spacing-md) !important;  /* 16px em todas as direções - mesmo da VendasPage */
+  width: 100% !important;
+  max-width: none !important;  /* Sem limitação de largura - aproveita toda tela */
+  margin: 0 !important;        /* Remove margens automáticas do Container */
+  box-sizing: border-box !important;
+  
+  /* Garantir que não herde limitações */
+  min-height: calc(100vh - 70px) !important;  /* Altura total menos header */
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.padaria-form-compact {
+  --mantine-spacing-xs: var(--padaria-space-xs);
+  --mantine-spacing-sm: var(--padaria-space-sm);
+  --mantine-spacing-md: var(--padaria-space-md);
+  --mantine-spacing-lg: var(--padaria-space-lg);
+}
+
+/* ===== NAVIGATION SHORTCUTS PADRONIZADOS ===== */
+.padaria-navigation-shortcut {
+  /* Dimensões EXATAS iguais para todos */
+  width: 28px !important;
+  height: 20px !important;
+  min-width: 28px !important;
+  max-width: 28px !important;
+  min-height: 20px !important;
+  max-height: 20px !important;
+  
+  /* Padding zero para controle total de tamanho */
+  padding: 0 !important;
+  margin: 0 !important;
+  
+  /* Visual */
+  background-color: #f1f3f4 !important;
+  color: var(--padaria-contrast-medium) !important;
+  font-size: 11px !important;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace !important;
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+  border: 1px solid var(--padaria-border-light) !important;
+  
+  /* Centralização perfeita */
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  line-height: 1 !important;
+  
+  /* Evitar quebras */
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  box-sizing: border-box !important;
+}
+
+/* ===== NAVEGAÇÃO ULTRA-COMPACTA (ANTI-SCROLL) ===== */
+/* Container principal - NUNCA deve ter scroll */
+.padaria-navigation-container {
+  height: calc(100vh - 140px) !important;
+  overflow: hidden !important; /* REGRA ABSOLUTA: NUNCA scroll */
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Navigation items compactos */
+.padaria-navigation-compact {
+  min-height: 28px !important;
+  max-height: 28px !important;
+  padding: 4px 8px !important;
+  margin: 1px 0 !important;
+}
+
+.padaria-navigation-compact .mantine-NavLink-label {
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+}
+
+.padaria-navigation-compact .mantine-NavLink-section {
+  margin-right: 6px !important;
+}
+
+/* Ícones ultra-compactos */
+.padaria-navigation-compact svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Dividers minimalistas */
+.padaria-navigation-container .mantine-Divider-root {
+  margin: 4px 0 !important;
+}
+
+.padaria-navigation-container .mantine-Divider-label {
+  font-size: 9px !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  color: var(--padaria-contrast-low) !important;
+}
+
+/* Shortcuts MUITO VISÍVEIS - F1...F12 */
+.padaria-navigation-shortcut {
+  width: 40px !important;
+  height: 24px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  background: var(--padaria-primary) !important;
+  color: white !important;
+  border-radius: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* ===== LAYOUT DINÂMICO - APENAS MÓDULOS CONTRATADOS ===== */
+.padaria-f-keys-grid {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  overflow: hidden !important; /* REGRA ABSOLUTA: NUNCA SCROLL */
+  flex-shrink: 0 !important; /* Impede compressão */
+}
+
+.padaria-f-keys-grid .mantine-NavLink-root {
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  flex-shrink: 0 !important; /* Impede compressão */
+  margin: 0 !important;
+  padding: 8px 12px !important;
+}
+
+.padaria-f-keys-grid .mantine-NavLink-label {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+}
+
+/* ===== ELIMINAÇÃO DE ELEMENTOS DUPLICADOS ===== */
+/* Remove elementos <p> duplicados gerados automaticamente pelo Mantine */
+.mantine-focus-auto.mantine-Text-root {
+  display: none !important;
+}
+
+/* Remove elementos Text duplicados em todos os cards */
+.padaria-card .mantine-Text-root:empty,
+.mantine-Card-root .mantine-Text-root:empty,
+.padaria-f-keys-grid .mantine-Text-root:not(.mantine-NavLink-label) {
+  display: none !important;
+}
+
+/* Remove elementos p vazios ou com apenas letra */
+p.mantine-Text-root[style*="--text-fz: calc(1.75rem"] {
+  display: none !important;
+}
+
+
+/* ===== MODAL CUSTOMIZATION ===== */
+.padaria-modal-wide {
+  max-width: 95vw !important;
+  width: 95vw !important;
+}
+
+/* ===== RESPONSIVIDADE MOBILE-FIRST ===== */
+@media (max-width: 1200px) {
+  .padaria-grid-4 {
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--padaria-space-sm);
+  }
+}
+
+@media (max-width: 900px) {
+  .padaria-grid-4,
+  .padaria-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--padaria-space-sm);
+  }
+}
+
+@media (max-width: 600px) {
+  .padaria-grid-4,
+  .padaria-grid-3,
+  .padaria-grid-2 {
+    grid-template-columns: 1fr;
+    gap: var(--padaria-space-sm);
+  }
+  
+  .padaria-modal-wide {
+    width: 98vw !important;
+  }
+  
+  .padaria-search-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--padaria-space-xs);
+  }
+  
+  .padaria-stats-card {
+    min-height: 70px;
+    padding: var(--padaria-space-sm);
+  }
+  
+  .padaria-table-cell {
+    padding: var(--padaria-space-xs) !important;
+    font-size: var(--padaria-font-size-xs) !important;
   }
 }

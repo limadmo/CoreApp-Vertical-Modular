@@ -21,6 +21,11 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconHome, IconSettings, IconHelp, IconLogout, IconUser } from '@tabler/icons-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useTenant } from '@hooks/useTenant';
+import { NavigationItem } from '../navigation';
+import { useKeyboardShortcuts } from '../../hooks/useKeyboardShortcuts';
+import { HelpModal } from '../help/HelpModal';
+import { ConfigurableUserAvatar } from '../user/ConfigurableUserAvatar';
+import { useCurrentUser } from '@hooks/useCurrentUser';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -34,9 +39,12 @@ interface AppLayoutProps {
  */
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [opened, { toggle }] = useDisclosure();
+  const [helpModalAberto, { open: abrirHelpModal, close: fecharHelpModal }] = useDisclosure(false);
   const { currentTenant, availableModules } = useTenant();
+  const { currentUser, isLoading: isLoadingUser } = useCurrentUser();
   const navigate = useNavigate();
   const location = useLocation();
+
 
   /**
    * Verifica se a rota atual está ativa
@@ -54,6 +62,31 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       toggle(); // Fechar sidebar em mobile após navegação
     }
   };
+
+  /**
+   * Handler para sistema de ajuda F1
+   */
+  const handleHelpModal = (): void => {
+    abrirHelpModal();
+  };
+
+  /**
+   * Handler para busca Ctrl+F - fallback global
+   */
+  const handleSearchFocus = (): void => {
+    // Fallback: tentar focar em qualquer campo de busca na página
+    const searchInput = document.querySelector('input[type="search"], input[placeholder*="buscar"], input[placeholder*="pesquisar"]') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.focus();
+      searchInput.select();
+    }
+  };
+
+  // Ativar sistema de atalhos globais
+  useKeyboardShortcuts({
+    onHelp: handleHelpModal,
+    onSearch: handleSearchFocus,
+  });
 
   return (
     <AppShell
@@ -77,203 +110,151 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               aria-label="Abrir navegação"
             />
             
-            <Group gap="sm">
-              <div className="w-8 h-8 bg-brand-500 rounded-lg flex items-center justify-center">
-                <Text size="lg" fw={700} c="white">
-                  C
-                </Text>
-              </div>
-              <div>
-                <Text size="lg" fw={600} c="gray.9">
-                  {currentTenant?.nome || 'CoreApp'}
-                </Text>
-                <Text size="xs" c="gray.6">
-                  {currentTenant?.verticalType}
-                </Text>
-              </div>
-            </Group>
+            <div>
+              <Text size="lg" fw={600} c="gray.9">
+                {currentTenant?.nome || 'CoreApp'}
+              </Text>
+              <Text size="xs" c="gray.6">
+                {currentTenant?.verticalType}
+              </Text>
+            </div>
           </Group>
 
-          {/* User Menu */}
-          <Menu shadow="md" width={200}>
-            <Menu.Target>
-              <ActionIcon
-                variant="light"
-                size="lg"
-                aria-label="Menu do usuário"
-                className="hover:bg-gray-100"
-              >
-                <Avatar size="sm" color="brand">
-                  <IconUser size={16} />
-                </Avatar>
-              </ActionIcon>
-            </Menu.Target>
+          {/* Informações do Funcionário + Menu */}
+          <Group gap="md">
+            {/* Informações básicas do funcionário logado */}
+            <div className="text-right">
+              <Text size="sm" fw={600} c="gray.9" className="leading-tight">
+                {currentUser?.name?.split(' ').slice(0, 2).join(' ') || 'João Silva'} {/* Nome + Sobrenome */}
+              </Text>
+              <Text size="xs" c="gray.6" className="leading-tight">
+                {currentUser?.login?.toLowerCase() || 'js01234a'} • {currentUser?.role || 'Gerente'}
+              </Text>
+            </div>
+            
+            {/* Avatar do Funcionário com Menu */}
+            <Menu shadow="md" width={220}>
+              <Menu.Target>
+                <div style={{ cursor: 'pointer' }}>
+                  <ConfigurableUserAvatar
+                    userName={currentUser?.name || 'João Silva Santos'}
+                    userLogin={currentUser?.login || 'JS01234A'}
+                    userRole={currentUser?.role || 'Gerente Geral'}
+                    photoUrl={currentUser?.photoUrl}
+                    isOnline={currentUser?.isOnline ?? true}
+                    size="md"
+                  />
+                </div>
+              </Menu.Target>
 
-            <Menu.Dropdown>
-              <Menu.Label>Usuário</Menu.Label>
-              <Menu.Item 
-                leftSection={<IconUser size={14} />}
-                onClick={() => handleNavigation('/perfil')}
-              >
-                Meu Perfil
-              </Menu.Item>
-              <Menu.Item 
-                leftSection={<IconSettings size={14} />}
-                onClick={() => handleNavigation('/configuracoes')}
-              >
-                Configurações
-              </Menu.Item>
-              
-              <Menu.Divider />
-              
-              <Menu.Item 
-                leftSection={<IconHelp size={14} />}
-                onClick={() => handleNavigation('/ajuda')}
-              >
-                Ajuda
-              </Menu.Item>
-              
-              <Menu.Divider />
-              
-              <Menu.Item
-                color="red"
-                leftSection={<IconLogout size={14} />}
-                onClick={() => {
-                  // TODO: Implementar logout
-                  console.log('Logout clicked');
-                }}
-              >
-                Sair
-              </Menu.Item>
-            </Menu.Dropdown>
-          </Menu>
+              <Menu.Dropdown>
+                <Menu.Label>
+                  {currentUser?.name || 'Usuário'}
+                </Menu.Label>
+                <Menu.Item 
+                  leftSection={<IconUser size={14} />}
+                  onClick={() => handleNavigation('/perfil')}
+                >
+                  Meu Perfil
+                </Menu.Item>
+                <Menu.Item 
+                  leftSection={<IconSettings size={14} />}
+                  onClick={() => handleNavigation('/configuracoes')}
+                >
+                  Configurações
+                </Menu.Item>
+                
+                <Menu.Divider />
+                
+                <Menu.Item 
+                  leftSection={<IconHelp size={14} />}
+                  onClick={() => handleNavigation('/ajuda')}
+                >
+                  Ajuda & Suporte
+                </Menu.Item>
+                
+                <Menu.Divider />
+                
+                <Menu.Item
+                  color="red"
+                  leftSection={<IconLogout size={14} />}
+                  onClick={() => {
+                    // TODO: Implementar logout real
+                    console.log('Logout do usuário:', currentUser?.login);
+                  }}
+                >
+                  Sair do Sistema
+                </Menu.Item>
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
         </Group>
       </AppShell.Header>
 
       {/* Sidebar Navigation */}
       <AppShell.Navbar p="md">
-        <ScrollArea>
+        <div className="padaria-navigation-container">
           <Stack gap="xs">
-            {/* Dashboard */}
-            <NavLink
-              href="#"
-              label="Dashboard"
-              description="Visão geral"
-              leftSection={<IconHome size="1rem" />}
-              rightSection={
-                <kbd className="px-2 py-1 bg-gray-100 text-xs rounded">
-                  F10
-                </kbd>
-              }
-              active={isActive('/')}
-              onClick={(e) => {
-                e.preventDefault();
-                handleNavigation('/');
-              }}
-              className="hover:bg-gray-50 rounded-md"
-            />
+            <Divider label="Módulos F1-F12" labelPosition="center" my="xs" />
 
-            <Divider label="Módulos Ativos" labelPosition="center" my="sm" />
+            {/* Layout Dinâmico - Apenas módulos ativos/contratados */}
+            <div className="padaria-f-keys-grid">
+              {availableModules
+                .filter(module => module.isActive)
+                .sort((a, b) => a.order - b.order)
+                .map((module) => {
+                  // Apenas o nome do módulo sem letra duplicada
+                  const getCompactLabel = (name: string, code: string) => {
+                    const nomeSimples = name.split(' ')[0]; // Primeira palavra apenas
+                    return nomeSimples; // Só "Vendas", "Clientes", etc.
+                  };
 
-            {/* Módulos Disponíveis */}
-            {availableModules
-              .filter(module => module.isActive)
-              .sort((a, b) => a.order - b.order)
-              .map((module) => (
-                <NavLink
-                  key={module.code}
-                  href="#"
-                  label={module.name}
-                  description={module.description}
-                  leftSection={
-                    <div className="w-6 h-6 bg-brand-100 rounded flex items-center justify-center">
-                      <Text size="xs" fw={600} c="brand.7">
-                        {module.code.charAt(0)}
-                      </Text>
-                    </div>
-                  }
-                  rightSection={
-                    <Badge
-                      size="xs"
-                      variant="light"
-                      color="gray"
-                      className="font-mono"
-                    >
-                      {module.shortcut}
-                    </Badge>
-                  }
-                  active={isActive(module.path)}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleNavigation(module.path);
-                  }}
-                  className="hover:bg-gray-50 rounded-md"
-                />
-              ))}
+                  // Tratamento especial para módulos específicos
+                  const handleClick = () => {
+                    if (module.code === 'HELP') {
+                      handleHelpModal(); // F11 = Modal de ajuda
+                    } else {
+                      handleNavigation(module.path);
+                    }
+                  };
 
-            <Divider label="Sistema" labelPosition="center" my="sm" />
+                  return (
+                    <NavigationItem
+                      key={module.code}
+                      icon={
+                        <div className="w-12 h-12 bg-brand-100 rounded flex items-center justify-center">
+                          <Text size="28px" fw={700} c="brand.7">
+                            {module.name.charAt(0)}
+                          </Text>
+                        </div>
+                      }
+                      label={getCompactLabel(module.name, module.code)}
+                      description=""
+                      shortcut={module.shortcut}
+                      isActive={isActive(module.path)}
+                      onClick={handleClick}
+                    />
+                  );
+                })}
+            </div>
 
-            {/* Configurações */}
-            <NavLink
-              href="#"
-              label="Configurações"
-              description="Preferências do sistema"
-              leftSection={<IconSettings size="1rem" />}
-              rightSection={
-                <kbd className="px-2 py-1 bg-gray-100 text-xs rounded">
-                  F9
-                </kbd>
-              }
-              active={isActive('/configuracoes')}
-              onClick={(e) => {
-                e.preventDefault();
-                handleNavigation('/configuracoes');
-              }}
-              className="hover:bg-gray-50 rounded-md"
-            />
-
-            {/* Ajuda */}
-            <NavLink
-              href="#"
-              label="Ajuda"
-              description="Suporte e documentação"
-              leftSection={<IconHelp size="1rem" />}
-              rightSection={
-                <kbd className="px-2 py-1 bg-gray-100 text-xs rounded">
-                  F12
-                </kbd>
-              }
-              active={isActive('/ajuda')}
-              onClick={(e) => {
-                e.preventDefault();
-                handleNavigation('/ajuda');
-              }}
-              className="hover:bg-gray-50 rounded-md"
-            />
           </Stack>
 
-          {/* Tenant Info */}
-          <div className="mt-auto pt-6">
-            <div className="p-3 bg-gray-50 rounded-lg">
-              <Text size="xs" fw={600} c="gray.7" mb="xs">
-                Tenant Atual
+          {/* Tenant Info Expandido */}
+          <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px' }}>
+            <div className="p-3 bg-brand-50 rounded-md border border-brand-100">
+              <Text size="11px" fw={700} c="brand.7" className="mb-1">
+                {currentTenant?.nome}
               </Text>
-              <Text size="xs" c="gray.6">
-                ID: {currentTenant?.id}
+              <Text size="9px" fw={500} c="gray.6">
+                {currentTenant?.verticalType} • {currentTenant?.status}
               </Text>
-              <Text size="xs" c="gray.6">
-                Vertical: {currentTenant?.verticalType}
+              <Text size="8px" fw={400} c="gray.5" className="mt-1">
+                ID: {currentTenant?.id?.slice(-8).toUpperCase()}
               </Text>
-              <Badge
-                size="xs"
-                color={currentTenant?.status === 'ACTIVE' ? 'green' : 'gray'}
-                mt="xs"
-              >
-                {currentTenant?.status}
-              </Badge>
             </div>
           </div>
-        </ScrollArea>
+        </div>
       </AppShell.Navbar>
 
       {/* Main Content */}
@@ -282,6 +263,12 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           {children}
         </div>
       </AppShell.Main>
+
+      {/* Modal de Ajuda F1 Global */}
+      <HelpModal
+        opened={helpModalAberto}
+        onClose={fecharHelpModal}
+      />
     </AppShell>
   );
 };

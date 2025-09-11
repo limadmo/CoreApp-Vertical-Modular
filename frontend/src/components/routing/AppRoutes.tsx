@@ -5,7 +5,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useTenant } from '@hooks/useTenant';
-import { VendasPage, ProdutosPage } from '../../pages';
+import { VendasPage, ProdutosPage, ClientesPage } from '../../pages';
 
 /**
  * Componente de rota protegida por módulo
@@ -249,15 +249,11 @@ export const AppRoutes: React.FC = () => {
         } 
       />
       
-      {/* TODO: Adicionar outras rotas quando implementadas */}
       <Route 
         path="/clientes" 
         element={
           <ProtectedRoute moduleCode="CLIENTES">
-            <div className="p-6">
-              <h1 className="text-3xl font-bold">👥 Clientes</h1>
-              <p>Em desenvolvimento...</p>
-            </div>
+            <ClientesPage />
           </ProtectedRoute>
         } 
       />

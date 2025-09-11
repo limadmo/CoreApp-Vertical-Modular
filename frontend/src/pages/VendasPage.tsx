@@ -367,8 +367,8 @@ export const VendasPage: React.FC = () => {
   };
 
   return (
-    <div className="padaria-theme">
-      <Stack gap="lg" p="md">
+    <div className="padaria-page-container padaria-theme">
+      <Stack gap="lg">
       {/* Header */}
       <div>
         <Title order={1} size="h2" className="padaria-brand">

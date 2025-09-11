@@ -12,6 +12,31 @@ export type {
   VerticalType,
 } from './tenant';
 
+// Tipos de clientes brasileiros
+export type {
+  Cliente,
+  ClienteResumo,
+  CriarClienteRequest,
+  AtualizarClienteRequest,
+  BuscarClienteRequest,
+  PagedResult,
+  Endereco,
+  EnderecoViaCep,
+  BuscarCepRequest,
+  BuscarEnderecoRequest,
+  CpfValidationResult,
+  TelefoneValidationResult,
+  CepValidationResult,
+  DireitoEsquecimentoRequest,
+  ClienteLgpd,
+  ClienteEstatisticas,
+  ClienteHistorico,
+  VendaHistorico,
+  FidelidadeHistorico,
+  AlteracaoHistorico,
+  HistoricoClienteRequest,
+} from './cliente';
+
 // Tipos comuns da aplicação
 export interface ApiResponse<T = any> {
   data: T;

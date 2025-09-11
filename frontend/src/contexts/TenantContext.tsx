@@ -94,6 +94,47 @@ const AVAILABLE_MODULES: Module[] = [
     path: '/auditoria',
     order: 8,
   },
+  // Módulos Sistema (F9-F12)
+  {
+    code: 'CONFIGURACOES',
+    name: 'Configurações',
+    description: 'Configurações do sistema',
+    icon: 'settings',
+    shortcut: 'F9',
+    isActive: true,
+    path: '/configuracoes',
+    order: 9,
+  },
+  {
+    code: 'DASHBOARD',
+    name: 'Dashboard',
+    description: 'Painel principal do sistema',
+    icon: 'dashboard',
+    shortcut: 'F10',
+    isActive: true,
+    path: '/',
+    order: 10,
+  },
+  {
+    code: 'HELP',
+    name: 'Ajuda',
+    description: 'Sistema de ajuda contextual',
+    icon: 'help',
+    shortcut: 'F11',
+    isActive: true,
+    path: '/ajuda',
+    order: 11,
+  },
+  {
+    code: 'ADMIN',
+    name: 'Administração',
+    description: 'Ferramentas administrativas',
+    icon: 'shield',
+    shortcut: 'F12',
+    isActive: false,
+    path: '/admin',
+    order: 12,
+  },
 ];
 
 /**

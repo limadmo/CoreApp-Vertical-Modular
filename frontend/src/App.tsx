@@ -6,11 +6,33 @@ import React from 'react';
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { coreAppTheme } from '@theme/theme';
 import { TenantProvider, useTenant } from './contexts/TenantContext';
 import { useKeyboardNavigation } from '@hooks/useKeyboardNavigation';
 import { AppRoutes } from './components/routing/AppRoutes';
 import { AppLayout } from '@components/layout';
+
+// Importar CSS da vertical PADARIA (versão limpa pós-migração)
+import './styles/globals.css';
+import './styles/verticals/padaria.css';
+
+/**
+ * Configuração do QueryClient para React Query
+ */
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      cacheTime: 10 * 60 * 1000, // 10 minutos
+      retry: 2,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 1,
+    },
+  },
+});
 
 /**
  * Componente interno que usa os hooks após providers
@@ -51,9 +73,11 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <AppLayout>
-      <AppRoutes />
-    </AppLayout>
+    <div className="padaria-theme">
+      <AppLayout>
+        <AppRoutes />
+      </AppLayout>
+    </div>
   );
 };
 
@@ -65,13 +89,20 @@ const AppContent: React.FC = () => {
  */
 export const App: React.FC = () => {
   return (
-    <MantineProvider theme={coreAppTheme}>
-      <Notifications position="top-right" />
-      <BrowserRouter>
-        <TenantProvider>
-          <AppContent />
-        </TenantProvider>
-      </BrowserRouter>
-    </MantineProvider>
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider theme={coreAppTheme}>
+        <Notifications position="top-right" />
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <TenantProvider>
+            <AppContent />
+          </TenantProvider>
+        </BrowserRouter>
+      </MantineProvider>
+    </QueryClientProvider>
   );
 };
