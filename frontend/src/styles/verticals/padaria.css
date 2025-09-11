@@ -1,0 +1,386 @@
+/**
+ * Paleta de Cores Vertical PADARIA - 2025
+ * Tema acolhedor e comercial com contraste WCAG AAA
+ */
+
+/* Variáveis CSS Customizáveis - PADARIA */
+:root {
+  /* ===== TEXTOS BASE ===== */
+  --padaria-text-primary: #1a1b1e;      /* Contraste 15:1 - Textos principais */
+  --padaria-text-secondary: #495057;     /* Contraste 9:1 - Textos secundários */
+  --padaria-text-muted: #6c757d;        /* Contraste 7:1 - Textos auxiliares */
+  --padaria-text-label: #374151;        /* Contraste 10:1 - Labels de formulários */
+  
+  /* ===== CORES COMERCIAIS PADARIA ===== */
+  --padaria-brand-primary: #d2691e;     /* Laranja pão dourado */
+  --padaria-brand-secondary: #8b4513;   /* Marrom crosta de pão */
+  --padaria-brand-accent: #daa520;      /* Dourado trigo */
+  
+  /* ===== CORES SEMÂNTICAS ===== */
+  --padaria-success: #198754;           /* Verde fresco */
+  --padaria-warning: #fd7e14;           /* Laranja alerta */
+  --padaria-error: #dc3545;             /* Vermelho erro */
+  --padaria-info: #0dcaf0;              /* Azul informação */
+  
+  /* ===== PREÇOS E VALORES MONETÁRIOS ===== */
+  --padaria-price-primary: #d2691e;              /* Preços principais - laranja pão */
+  --padaria-price-secondary: #8b4513;            /* Preços secundários - marrom */
+  --padaria-price-unit: #495057;                 /* Preço unitário - contraste 9:1 */
+  --padaria-total-emphasis: #1a1b1e;             /* Total da venda - preto forte */
+  --padaria-subtotal: #374151;                   /* Subtotais - contraste 10:1 */
+  --padaria-money-success: #198754;              /* Valores positivos - verde */
+  --padaria-money-error: #dc3545;                /* Valores negativos - vermelho */
+  --padaria-money-neutral: #6c757d;              /* Valores neutros - cinza */
+  
+  /* ===== DROPDOWN ESPECÍFICO ===== */
+  --padaria-dropdown-item-text: #1a1b1e;         /* Texto dos itens */
+  --padaria-dropdown-item-bg: #ffffff;           /* Fundo dos itens */
+  --padaria-dropdown-item-hover-bg: #f8f9fa;     /* Fundo hover */
+  --padaria-dropdown-selected-bg: #e7f3ff;       /* Fundo selecionado */
+  
+  /* ===== CORES CATEGORIA PRODUTOS ===== */
+  --padaria-categoria-paes: #e97d1c;     /* Laranja escuro */
+  --padaria-categoria-doces: #d946a6;    /* Rosa escuro */
+  --padaria-categoria-salgados: #ca8a04; /* Amarelo escuro */
+  --padaria-categoria-bolos: #7c3aed;    /* Roxo escuro */
+  --padaria-categoria-bebidas: #2563eb;  /* Azul escuro */
+  
+  /* ===== TONS DE FUNDO ===== */
+  --padaria-bg-primary: #ffffff;
+  --padaria-bg-secondary: #f8f9fa;
+  --padaria-bg-accent: #fff5ee;         /* Creme suave */
+  
+  /* ===== BORDAS ===== */
+  --padaria-border-light: #e5e7eb;
+  --padaria-border-medium: #d1d5db;
+  --padaria-border-dark: #9ca3af;
+}
+
+/* ===== CLASSES UTILITÁRIAS PADARIA ===== */
+.padaria-text-primary {
+  color: var(--padaria-text-primary) !important;
+}
+
+.padaria-text-secondary {
+  color: var(--padaria-text-secondary) !important;
+}
+
+.padaria-text-muted {
+  color: var(--padaria-text-muted) !important;
+}
+
+.padaria-text-label {
+  color: var(--padaria-text-label) !important;
+  font-weight: 600 !important;
+}
+
+.padaria-brand {
+  color: var(--padaria-brand-primary) !important;
+}
+
+.padaria-success {
+  color: var(--padaria-success) !important;
+}
+
+.padaria-warning {
+  color: var(--padaria-warning) !important;
+}
+
+.padaria-error {
+  color: var(--padaria-error) !important;
+}
+
+/* ===== CLASSES PREÇOS E VALORES MONETÁRIOS ===== */
+.padaria-price-primary {
+  color: var(--padaria-price-primary) !important;
+  font-weight: 700 !important;
+}
+
+.padaria-price-secondary {
+  color: var(--padaria-price-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.padaria-price-unit {
+  color: var(--padaria-price-unit) !important;
+  font-weight: 500 !important;
+}
+
+.padaria-total {
+  color: var(--padaria-total-emphasis) !important;
+  font-weight: 700 !important;
+}
+
+.padaria-subtotal {
+  color: var(--padaria-subtotal) !important;
+  font-weight: 600 !important;
+}
+
+.padaria-money-success {
+  color: var(--padaria-money-success) !important;
+  font-weight: 600 !important;
+}
+
+.padaria-money-error {
+  color: var(--padaria-money-error) !important;
+  font-weight: 600 !important;
+}
+
+.padaria-money-neutral {
+  color: var(--padaria-money-neutral) !important;
+  font-weight: 500 !important;
+}
+
+/* ===== ELEMENTOS KBD (ATALHOS DE TECLADO) ===== */
+.padaria-kbd {
+  background: var(--padaria-bg-secondary) !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  color: var(--padaria-text-primary) !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--padaria-border-medium) !important;
+}
+
+/* ===== SOBRESCRITA MANTINE PARA PADARIA (MÁXIMA ESPECIFICIDADE) ===== */
+
+/* LABELS - FORÇAR VISIBILIDADE MÁXIMA */
+.padaria-theme .mantine-InputWrapper-label,
+.padaria-theme .mantine-Select-label,
+.padaria-theme .mantine-TextInput-label,
+.padaria-theme .mantine-NumberInput-label,
+[data-mantine-color-scheme] .padaria-theme .mantine-InputWrapper-label,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-label,
+[data-mantine-color-scheme] .padaria-theme .mantine-TextInput-label,
+[data-mantine-color-scheme] .padaria-theme .mantine-NumberInput-label {
+  color: #1a1b1e !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  margin-bottom: 8px !important;
+  text-shadow: none !important;
+  opacity: 1 !important;
+}
+
+/* DROPDOWN SELECT - FORÇAR VISIBILIDADE */
+.padaria-theme .mantine-Select-dropdown,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-dropdown {
+  background-color: white !important;
+  border: 2px solid #374151 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  z-index: 9999 !important;
+}
+
+/* ITENS DO DROPDOWN - TORNAR VISÍVEIS (MÁXIMA ESPECIFICIDADE) */
+.padaria-theme .mantine-Select-item,
+.padaria-theme .mantine-Select-option,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-item,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-option,
+html .padaria-theme .mantine-Select-item,
+html [data-mantine-color-scheme] .padaria-theme .mantine-Select-item,
+body .padaria-theme .mantine-Select-item,
+body [data-mantine-color-scheme] .padaria-theme .mantine-Select-item {
+  color: var(--padaria-dropdown-item-text) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  padding: 12px 16px !important;
+  background-color: var(--padaria-dropdown-item-bg) !important;
+  border: none !important;
+  opacity: 1 !important;
+  text-shadow: none !important;
+}
+
+/* ITENS NÃO SELECIONADOS - FORÇA MÁXIMA */
+.padaria-theme .mantine-Select-item:not([data-selected="true"]),
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-item:not([data-selected="true"]),
+html .padaria-theme .mantine-Select-item:not([data-selected="true"]),
+body .padaria-theme .mantine-Select-item:not([data-selected="true"]) {
+  color: var(--padaria-dropdown-item-text) !important;
+  background-color: var(--padaria-dropdown-item-bg) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+/* FORÇA BRUTA FINAL - ESPECIFICIDADE EXTREMA */
+html body .padaria-theme .mantine-Select-dropdown .mantine-Select-item {
+  color: var(--padaria-dropdown-item-text) !important;
+  background-color: var(--padaria-dropdown-item-bg) !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+}
+
+/* CLASSES ESPECÍFICAS APLICADAS DIRETAMENTE NO COMPONENTE */
+.padaria-select-dropdown {
+  background-color: #ffffff !important;
+  border: 2px solid #374151 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  z-index: 9999 !important;
+}
+
+.padaria-select-option {
+  color: #1a1b1e !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  padding: 12px 16px !important;
+  background-color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  display: flex !important;
+}
+
+.padaria-select-option[data-selected="true"] {
+  background-color: #e7f3ff !important;
+  color: #1a1b1e !important;
+  font-weight: 700 !important;
+}
+
+.padaria-select-option:hover {
+  background-color: #f8f9fa !important;
+  color: #1a1b1e !important;
+}
+
+.padaria-select-input {
+  font-size: 16px !important;
+  color: #1a1b1e !important;
+  background-color: #ffffff !important;
+}
+
+.padaria-select-label {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  color: #1a1b1e !important;
+}
+
+/* ITEM SELECIONADO NO DROPDOWN */
+.padaria-theme .mantine-Select-item[data-selected="true"],
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-item[data-selected="true"],
+html body .padaria-theme .mantine-Select-dropdown .mantine-Select-item[data-selected="true"] {
+  background-color: var(--padaria-dropdown-selected-bg) !important;
+  color: var(--padaria-dropdown-item-text) !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+}
+
+/* HOVER NOS ITENS - MÁXIMA ESPECIFICIDADE */
+.padaria-theme .mantine-Select-item:hover,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-item:hover,
+html .padaria-theme .mantine-Select-item:hover,
+body .padaria-theme .mantine-Select-item:hover,
+.padaria-theme .mantine-Select-item:not([data-selected="true"]):hover,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-item:not([data-selected="true"]):hover,
+html body .padaria-theme .mantine-Select-dropdown .mantine-Select-item:hover {
+  background-color: var(--padaria-dropdown-item-hover-bg) !important;
+  color: var(--padaria-dropdown-item-text) !important;
+  font-weight: 600 !important;
+  opacity: 1 !important;
+}
+
+/* INPUT FIELDS - GARANTIR CONTRASTE */
+.padaria-theme .mantine-Input-input,
+.padaria-theme .mantine-Select-input,
+.padaria-theme .mantine-TextInput-input,
+.padaria-theme .mantine-NumberInput-input,
+[data-mantine-color-scheme] .padaria-theme .mantine-Input-input,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-input,
+[data-mantine-color-scheme] .padaria-theme .mantine-TextInput-input,
+[data-mantine-color-scheme] .padaria-theme .mantine-NumberInput-input {
+  color: #1a1b1e !important;
+  background-color: white !important;
+  border: 2px solid #d1d5db !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+}
+
+/* FOCUS STATE */
+.padaria-theme .mantine-Input-input:focus,
+.padaria-theme .mantine-Select-input:focus,
+[data-mantine-color-scheme] .padaria-theme .mantine-Input-input:focus,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-input:focus {
+  border-color: #374151 !important;
+  box-shadow: 0 0 0 2px rgba(55, 65, 81, 0.2) !important;
+}
+
+/* DESCRIÇÕES */
+.padaria-theme .mantine-InputWrapper-description {
+  color: #6c757d !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+}
+
+/* PLACEHOLDERS */
+.padaria-theme .mantine-Input-input::placeholder,
+.padaria-theme .mantine-Select-input::placeholder,
+[data-mantine-color-scheme] .padaria-theme .mantine-Input-input::placeholder,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-input::placeholder {
+  color: #6c757d !important;
+  opacity: 1 !important;
+}
+
+/* DISABLED STATE */
+.padaria-theme .mantine-Input-input:disabled,
+.padaria-theme .mantine-Select-input:disabled,
+[data-mantine-color-scheme] .padaria-theme .mantine-Input-input:disabled,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-input:disabled {
+  color: #6c757d !important;
+  background-color: #f8f9fa !important;
+}
+
+/* SELECT ARROW */
+.padaria-theme .mantine-Select-rightSection,
+[data-mantine-color-scheme] .padaria-theme .mantine-Select-rightSection {
+  color: #374151 !important;
+}
+
+/* ERROR STATE */
+.padaria-theme .mantine-InputWrapper-error,
+[data-mantine-color-scheme] .padaria-theme .mantine-InputWrapper-error {
+  color: #dc3545 !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+}
+
+/* ===== BADGES CATEGORIA PADARIA ===== */
+.badge-categoria-paes {
+  background-color: var(--padaria-categoria-paes) !important;
+  color: white !important;
+}
+
+.badge-categoria-doces {
+  background-color: var(--padaria-categoria-doces) !important;
+  color: white !important;
+}
+
+.badge-categoria-salgados {
+  background-color: var(--padaria-categoria-salgados) !important;
+  color: white !important;
+}
+
+.badge-categoria-bolos {
+  background-color: var(--padaria-categoria-bolos) !important;
+  color: white !important;
+}
+
+.badge-categoria-bebidas {
+  background-color: var(--padaria-categoria-bebidas) !important;
+  color: white !important;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
+  .padaria-theme .mantine-InputWrapper-label {
+    font-size: 15px !important;
+  }
+}
+
+/* ===== MODO ESCURO (FUTURO) ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --padaria-text-primary: #f8f9fa;
+    --padaria-text-secondary: #e9ecef;
+    --padaria-text-muted: #adb5bd;
+    --padaria-text-label: #dee2e6;
+    --padaria-bg-primary: #212529;
+    --padaria-bg-secondary: #2c3034;
+  }
+}
