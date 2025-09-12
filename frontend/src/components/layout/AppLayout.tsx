@@ -111,25 +111,25 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             />
             
             <div>
-              <Text size="lg" fw={600} c="gray.9">
-                {currentTenant?.nome || 'CoreApp'}
-              </Text>
-              <Text size="xs" c="gray.6">
-                {currentTenant?.verticalType}
-              </Text>
+              <div style={{ fontSize: '24px', fontWeight: 700, color: '#000000' }}>
+                Padaria São José Demo
+              </div>
+              <div style={{ fontSize: '14px', color: '#666666' }}>
+                PADARIA
+              </div>
             </div>
           </Group>
 
           {/* Informações do Funcionário + Menu */}
           <Group gap="md">
             {/* Informações básicas do funcionário logado */}
-            <div className="text-right">
-              <Text size="sm" fw={600} c="gray.9" className="leading-tight">
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: '#000000' }}>
                 {currentUser?.name?.split(' ').slice(0, 2).join(' ') || 'João Silva'} {/* Nome + Sobrenome */}
-              </Text>
-              <Text size="xs" c="gray.6" className="leading-tight">
+              </div>
+              <div style={{ fontSize: '12px', color: '#666666' }}>
                 {currentUser?.login?.toLowerCase() || 'js01234a'} • {currentUser?.role || 'Gerente'}
-              </Text>
+              </div>
             </div>
             
             {/* Avatar do Funcionário com Menu */}
@@ -239,6 +239,27 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </div>
 
           </Stack>
+
+          {/* Tenant Info no fim da sidebar - align bottom */}
+          <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px' }}>
+            {/* Divider antes da informação do tenant */}
+            <Divider label="Tenant Ativo" labelPosition="center" my="md" />
+
+            {/* Tenant Info */}
+            <div style={{ 
+              padding: '12px'
+            }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: '#000000', marginBottom: '4px' }}>
+                {currentTenant?.nome}
+              </div>
+              <div style={{ fontSize: '9px', fontWeight: 500, color: '#000000' }}>
+                {currentTenant?.verticalType} • {currentTenant?.status}
+              </div>
+              <div style={{ fontSize: '8px', fontWeight: 400, color: '#000000', marginTop: '4px' }}>
+                ID: {currentTenant?.id?.slice(-8).toUpperCase()}
+              </div>
+            </div>
+          </div>
 
           {/* Tenant Info Expandido */}
           <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px' }}>

@@ -287,7 +287,7 @@ export const ClientesPage: React.FC = () => {
   const [modalAberto, { open: abrirModal, close: fecharModal }] = useDisclosure(false);
   const [helpModalAberto, { open: abrirHelpModal, close: fecharHelpModal }] = useDisclosure(false);
 
-  // Hooks
+  // Hooks - usando dados do banco
   const {
     clientes,
     totalClientes,

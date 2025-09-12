@@ -21,10 +21,11 @@ const KEYBOARD_SHORTCUTS = {
   F9: { action: 'navigate', module: '/configuracoes', label: 'Configurações' },
   F10: { action: 'navigate', module: '/', label: 'Dashboard' },
   F11: { action: 'browser', module: 'fullscreen', label: 'Tela cheia (sistema)' },
-  F12: { action: 'navigate', module: '/auditoria', label: 'Auditoria' },
+  // F12: Reservado para Dev Tools do navegador - não bloquear
   
   // Atalhos especiais
   'CTRL+F': { action: 'search', module: 'current', label: 'Busca inteligente' },
+  'CTRL+F12': { action: 'navigate', module: '/admin', label: 'Administração' },
 } as const;
 
 /**
@@ -143,10 +144,11 @@ export const useKeyboardShortcuts = (props: UseKeyboardShortcutsProps = {}) => {
         return false; // Garantir que não propague
       }
 
-      // Para F1-F12 não mapeadas, ainda assim prevenir comportamento do navegador
+      // Para F1-F11 não mapeadas, ainda assim prevenir comportamento do navegador
+      // F12 é permitido para Dev Tools do navegador
       if (key.startsWith('F') && key.length >= 2 && key.length <= 3) {
         const fNumber = parseInt(key.substring(1));
-        if (fNumber >= 1 && fNumber <= 12) {
+        if (fNumber >= 1 && fNumber <= 11) { // Alterado de 12 para 11
           event.preventDefault();
           event.stopPropagation();
           event.stopImmediatePropagation();
@@ -178,8 +180,8 @@ export const useKeyboardShortcuts = (props: UseKeyboardShortcutsProps = {}) => {
       const key = event.key;
       const ctrlKey = event.ctrlKey || event.metaKey;
       
-      // F1-F12 ou Ctrl+F
-      if ((key.startsWith('F') && key.length >= 2 && key.length <= 3) || 
+      // F1-F11 ou Ctrl+F (F12 é permitido)
+      if ((key.startsWith('F') && key.length >= 2 && key.length <= 3 && key !== 'F12') || 
           (ctrlKey && key.toUpperCase() === 'F')) {
         event.preventDefault();
         event.stopPropagation();
@@ -195,8 +197,8 @@ export const useKeyboardShortcuts = (props: UseKeyboardShortcutsProps = {}) => {
       const key = event.key;
       const ctrlKey = event.ctrlKey || event.metaKey;
       
-      // F1-F12 ou Ctrl+F
-      if ((key.startsWith('F') && key.length >= 2 && key.length <= 3) || 
+      // F1-F11 ou Ctrl+F (F12 é permitido)
+      if ((key.startsWith('F') && key.length >= 2 && key.length <= 3 && key !== 'F12') || 
           (ctrlKey && key.toUpperCase() === 'F')) {
         event.preventDefault();
         event.stopPropagation();

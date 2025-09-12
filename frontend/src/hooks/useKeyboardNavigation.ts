@@ -114,11 +114,7 @@ export const useKeyboardNavigation = (): KeyboardNavigationConfig => {
         const srElement = document.getElementById('sr-shortcuts');
         if (srElement) srElement.textContent = 'Alternando tela cheia';
       },
-      'F12': () => {
-        navigate('/ajuda');
-        const srElement = document.getElementById('sr-shortcuts');
-        if (srElement) srElement.textContent = 'Abrindo Ajuda';
-      },
+      // F12: Reservado para Dev Tools do navegador
       
       // Navegação básica
       'Escape': () => {

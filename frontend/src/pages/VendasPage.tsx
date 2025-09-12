@@ -33,6 +33,7 @@ import {
   IconPackage,
 } from '@tabler/icons-react';
 import { ProductSearchInput } from '@components/search';
+import { ModernPagination } from '../components/pagination/ModernPagination';
 
 interface ProdutoPadaria {
   id: string;
@@ -249,6 +250,10 @@ export const VendasPage: React.FC = () => {
   const [formaPagamento, setFormaPagamento] = useState<string>('DINHEIRO');
   const [valorRecebido, setValorRecebido] = useState<number | ''>('');
   
+  // Estados de paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  
   /**
    * Suporte global para Ctrl+F focar na busca
    */
@@ -267,6 +272,18 @@ export const VendasPage: React.FC = () => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  /**
+   * Filtros e paginação de produtos
+   */
+  const produtosDisponiveis = PRODUTOS_DEMO.filter(produto => produto.estoque > 0);
+  const totalProducts = produtosDisponiveis.length;
+  const totalPages = Math.ceil(totalProducts / itemsPerPage);
+  
+  // Slice dinâmico para paginação
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const produtosPaginados = produtosDisponiveis.slice(startIndex, endIndex);
 
   /**
    * Calcular total da venda
@@ -417,15 +434,12 @@ export const VendasPage: React.FC = () => {
                   Produtos Mais Vendidos
                 </Title>
                 <Badge variant="light" color="blue">
-                  {PRODUTOS_DEMO.filter(p => p.estoque > 0).length} disponíveis
+                  {totalProducts} disponíveis
                 </Badge>
               </Group>
               
               <Grid>
-                {PRODUTOS_DEMO
-                  .filter(produto => produto.estoque > 0)
-                  .slice(0, 8) // Mostrar apenas os 8 primeiros
-                  .map((produto) => (
+                {produtosPaginados.map((produto) => (
                   <Grid.Col span={{ base: 12, sm: 6 }} key={produto.id}>
                     <Card 
                       padding="sm" 
@@ -470,6 +484,24 @@ export const VendasPage: React.FC = () => {
                   </Grid.Col>
                 ))}
               </Grid>
+
+              {/* Paginação */}
+              {totalPages > 1 && (
+                <Group justify="center" mt="md">
+                  <ModernPagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={totalProducts}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={(page) => setCurrentPage(page)}
+                    onItemsPerPageChange={(size) => {
+                      setItemsPerPage(size);
+                      setCurrentPage(1); // Reset para primeira página
+                    }}
+                    itemsPerPageOptions={[8, 10, 16, 20]}
+                  />
+                </Group>
+              )}
             </Paper>
           </Stack>
         </Grid.Col>
@@ -702,7 +734,7 @@ export const VendasPage: React.FC = () => {
             </Text>
             <Text size="md" className="padaria-text-muted">|</Text>
             <Text size="md" className="padaria-text-secondary" fw={500}>
-              Produtos disponíveis: <strong className="padaria-text-primary">{PRODUTOS_DEMO.filter(p => p.estoque > 0).length}</strong>
+              Produtos disponíveis: <strong className="padaria-text-primary">{totalProducts}</strong>
             </Text>
           </Group>
         </Group>

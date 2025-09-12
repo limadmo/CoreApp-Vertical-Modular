@@ -24,7 +24,7 @@ export interface PaginatedResponse<T = any> {
  * Configuração base da API
  */
 const API_CONFIG = {
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost/api',
   timeout: 30000, // 30 segundos
   headers: {
     'Content-Type': 'application/json',
@@ -178,7 +178,7 @@ api.interceptors.response.use(
 function getCurrentTenantId(): string | null {
   // Em desenvolvimento, usar tenant demo
   if (import.meta.env.DEV) {
-    return 'demo-padaria-123';
+    return 'padaria-demo';
   }
   
   // TODO: Implementar obtenção do tenant do contexto

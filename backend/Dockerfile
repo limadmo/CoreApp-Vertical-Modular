@@ -13,8 +13,8 @@ WORKDIR /app/src/CoreApp.Api
 RUN dotnet restore
 RUN dotnet publish -c Release -o /app/publish
 
-# Stage 2: Runtime
-FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+# Stage 2: Development with SDK for migrations
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS final
 WORKDIR /app
 
 # Configurações de ambiente brasileiro
@@ -37,9 +37,14 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN addgroup --system --gid 1001 coreapp \
     && adduser --system --uid 1001 --ingroup coreapp coreapp
 
-# Copiar build da aplicação
+# Copiar código fonte para desenvolvimento e build publicado
 COPY --from=build /app/publish /app
+COPY src/ /app/src/
 RUN chown -R coreapp:coreapp /app
+
+# Instalar Entity Framework tools
+RUN dotnet tool install --global dotnet-ef
+ENV PATH="${PATH}:/root/.dotnet/tools"
 
 # Criar diretório para logs
 RUN mkdir -p /app/logs && chown -R coreapp:coreapp /app/logs

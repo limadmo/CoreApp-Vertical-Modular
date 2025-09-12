@@ -1,10 +1,8 @@
 /**
  * Service para comunicação com API de Clientes Brasileiros
- * Implementa todas as operações CRUD + business logic + LGPD
- * Usa dados gerados como fallback durante desenvolvimento
+ * Usa APENAS dados reais da base de dados via API
  */
 import { api } from './api';
-import { clientesGerados, clientesToResumo, calcularEstatisticas } from '../data/clientesGenerator';
 import {
   Cliente,
   ClienteResumo,
@@ -25,274 +23,7 @@ import {
   HistoricoClienteRequest
 } from '../types/cliente';
 
-const BASE_URL = '/api/clientes';
-
-// Estado local dos dados gerados (para desenvolvimento)
-class LocalClienteStore {
-  private clientes: Cliente[] = [];
-  private nextId = 21;
-
-  constructor() {
-    this.loadInitialData();
-  }
-
-  private loadInitialData() {
-    const stored = localStorage.getItem('clientes-gerados');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        this.clientes = data.clientes || [];
-        this.nextId = data.nextId || 21;
-      } catch (error) {
-        console.warn('Erro ao carregar dados do localStorage, usando dados gerados');
-        this.clientes = [...clientesGerados];
-        this.saveData();
-      }
-    } else {
-      this.clientes = [...clientesGerados];
-      this.saveData();
-    }
-  }
-
-  private saveData() {
-    try {
-      localStorage.setItem('clientes-gerados', JSON.stringify({
-        clientes: this.clientes,
-        nextId: this.nextId
-      }));
-    } catch (error) {
-      console.warn('Erro ao salvar no localStorage:', error);
-    }
-  }
-
-  async listar(request: BuscarClienteRequest): Promise<PagedResult<ClienteResumo>> {
-    let clientesFiltrados = [...this.clientes];
-
-    // Aplicar filtros
-    if (request.termo) {
-      const termo = request.termo.toLowerCase();
-      clientesFiltrados = clientesFiltrados.filter(cliente =>
-        cliente.nome.toLowerCase().includes(termo) ||
-        cliente.cpf?.includes(termo.replace(/\D/g, '')) ||
-        cliente.email?.toLowerCase().includes(termo) ||
-        cliente.telefoneCelular?.includes(termo.replace(/\D/g, ''))
-      );
-    }
-
-    if (request.apenasAtivos !== undefined) {
-      clientesFiltrados = clientesFiltrados.filter(c => c.ativo === request.apenasAtivos);
-    }
-
-    if (request.categoriaCliente) {
-      clientesFiltrados = clientesFiltrados.filter(c => c.categoriaCliente === request.categoriaCliente);
-    }
-
-    if (request.uf) {
-      clientesFiltrados = clientesFiltrados.filter(c => c.endereco?.uf === request.uf);
-    }
-
-    if (request.cidade) {
-      clientesFiltrados = clientesFiltrados.filter(c => 
-        c.endereco?.cidade?.toLowerCase().includes(request.cidade!.toLowerCase())
-      );
-    }
-
-    // Ordenação
-    const ordenarPor = request.ordenarPor || 'nome';
-    const direcao = request.direcaoOrdenacao || 'ASC';
-    
-    clientesFiltrados.sort((a, b) => {
-      let valueA: any, valueB: any;
-      
-      switch (ordenarPor) {
-        case 'nome':
-          valueA = a.nome;
-          valueB = b.nome;
-          break;
-        case 'dataCadastro':
-          valueA = new Date(a.dataCadastro);
-          valueB = new Date(b.dataCadastro);
-          break;
-        case 'dataUltimaCompra':
-          valueA = a.dataUltimaCompra ? new Date(a.dataUltimaCompra) : new Date(0);
-          valueB = b.dataUltimaCompra ? new Date(b.dataUltimaCompra) : new Date(0);
-          break;
-        case 'valorTotalCompras':
-          valueA = a.valorTotalCompras;
-          valueB = b.valorTotalCompras;
-          break;
-        default:
-          valueA = a.nome;
-          valueB = b.nome;
-      }
-
-      if (valueA < valueB) return direcao === 'ASC' ? -1 : 1;
-      if (valueA > valueB) return direcao === 'ASC' ? 1 : -1;
-      return 0;
-    });
-
-    // Paginação
-    const page = request.pagina || 1;
-    const limit = request.tamanhoPagina || 10;
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    
-    const clientesPaginados = clientesFiltrados.slice(startIndex, endIndex);
-    const totalItems = clientesFiltrados.length;
-    const totalPages = Math.ceil(totalItems / limit);
-
-    return {
-      items: clientesToResumo(clientesPaginados),
-      totalItems,
-      totalPages,
-      currentPage: page,
-      pageSize: limit,
-      hasNext: page < totalPages,
-      hasPrevious: page > 1
-    };
-  }
-
-  async obterPorId(id: string): Promise<Cliente> {
-    const cliente = this.clientes.find(c => c.id === id);
-    if (!cliente) {
-      throw new Error(`Cliente com ID ${id} não encontrado`);
-    }
-    return { ...cliente };
-  }
-
-  async criar(request: CriarClienteRequest): Promise<Cliente> {
-    // Validações básicas
-    if (request.cpf) {
-      const cpfLimpo = request.cpf.replace(/\D/g, '');
-      const cpfExistente = this.clientes.find(c => c.cpf === cpfLimpo);
-      if (cpfExistente) {
-        throw new Error('CPF já cadastrado para outro cliente');
-      }
-    }
-
-    if (request.email) {
-      const emailExistente = this.clientes.find(c => 
-        c.email?.toLowerCase() === request.email!.toLowerCase()
-      );
-      if (emailExistente) {
-        throw new Error('Email já cadastrado para outro cliente');
-      }
-    }
-
-    const novoCliente: Cliente = {
-      id: this.nextId.toString(),
-      nome: request.nome,
-      cpf: request.cpf?.replace(/\D/g, ''),
-      cpfValidado: false,
-      rg: request.rg,
-      telefoneCelular: request.telefoneCelular?.replace(/\D/g, ''),
-      telefoneValidado: false,
-      email: request.email,
-      emailValidado: false,
-      dataNascimento: request.dataNascimento,
-      genero: request.genero,
-      profissao: request.profissao,
-      estadoCivil: request.estadoCivil,
-      categoriaCliente: (request.categoriaCliente as any) || 'Regular',
-      ativo: true,
-      endereco: request.endereco,
-      limiteCredito: request.limiteCredito || 1000,
-      descontoPadrao: request.descontoPadrao || 0,
-      valorTotalCompras: 0,
-      quantidadeCompras: 0,
-      dataUltimaCompra: undefined,
-      pontuacaoFidelidade: 0,
-      observacoes: request.observacoes,
-      consentimentoColeta: request.consentimentoColeta || false,
-      consentimentoMarketing: request.consentimentoMarketing || false,
-      consentimentoCompartilhamento: request.consentimentoCompartilhamento || false,
-      direitoEsquecimento: false,
-      finalidadeColeta: request.finalidadeColeta || 'Gestão de relacionamento',
-      dataConsentimento: new Date().toISOString().split('T')[0],
-      ipConsentimento: '192.168.1.100',
-      dataCadastro: new Date().toISOString().split('T')[0],
-      dataUltimaAtualizacao: new Date().toISOString().split('T')[0],
-      tenantId: 'demo-padaria-123'
-    };
-
-    this.clientes.push(novoCliente);
-    this.nextId++;
-    this.saveData();
-
-    return { ...novoCliente };
-  }
-
-  async atualizar(id: string, request: AtualizarClienteRequest): Promise<Cliente> {
-    const index = this.clientes.findIndex(c => c.id === id);
-    if (index === -1) {
-      throw new Error(`Cliente com ID ${id} não encontrado`);
-    }
-
-    const clienteAtual = this.clientes[index];
-    const clienteAtualizado: Cliente = {
-      ...clienteAtual,
-      ...request,
-      cpf: request.cpf?.replace(/\D/g, '') || clienteAtual.cpf,
-      telefoneCelular: request.telefoneCelular?.replace(/\D/g, '') || clienteAtual.telefoneCelular,
-      dataUltimaAtualizacao: new Date().toISOString().split('T')[0]
-    };
-
-    this.clientes[index] = clienteAtualizado;
-    this.saveData();
-
-    return { ...clienteAtualizado };
-  }
-
-  async remover(id: string): Promise<void> {
-    const index = this.clientes.findIndex(c => c.id === id);
-    if (index === -1) {
-      throw new Error(`Cliente com ID ${id} não encontrado`);
-    }
-
-    this.clientes[index] = {
-      ...this.clientes[index],
-      ativo: false,
-      dataUltimaAtualizacao: new Date().toISOString().split('T')[0]
-    };
-
-    this.saveData();
-  }
-
-  async obterEstatisticas(): Promise<ClienteEstatisticas> {
-    const stats = calcularEstatisticas(this.clientes);
-    
-    return {
-      totalClientes: stats.totalClientes,
-      clientesAtivos: stats.clientesAtivos,
-      clientesInativos: stats.clientesInativos,
-      clientesComConsentimento: this.clientes.filter(c => c.consentimentoColeta).length,
-      clientesSemConsentimento: this.clientes.filter(c => !c.consentimentoColeta).length,
-      clientesPorCategoria: stats.categorias,
-      clientesPorUF: this.clientes.reduce((acc, c) => {
-        if (c.endereco?.uf) {
-          acc[c.endereco.uf] = (acc[c.endereco.uf] || 0) + 1;
-        }
-        return acc;
-      }, {} as Record<string, number>),
-      clientesPorMes: {},
-      valorTotalCompras: stats.valorTotalVendas,
-      ticketMedioGeral: stats.ticketMedio,
-      totalPontosFidelidade: this.clientes.reduce((acc, c) => acc + c.pontuacaoFidelidade, 0)
-    };
-  }
-
-  resetDados() {
-    this.clientes = [...clientesGerados];
-    this.nextId = 21;
-    this.saveData();
-  }
-}
-
-// Instância do store local
-const localStore = new LocalClienteStore();
-
-// Detecta se deve usar dados locais (desenvolvimento)
-const useLocalData = import.meta.env.DEV || !import.meta.env.VITE_API_URL;
+const BASE_URL = '/clientes';
 
 export const clienteService = {
   // === CRUD BÁSICO ===
@@ -301,17 +32,14 @@ export const clienteService = {
    * Lista clientes com paginação e filtros
    */
   async listar(request: BuscarClienteRequest): Promise<PagedResult<ClienteResumo>> {
-    if (useLocalData) {
-      console.log('📊 [LOCAL] Listando clientes com dados gerados');
-      return localStore.listar(request);
-    }
-
     try {
+      console.log('📊 Buscando clientes da API real:', request);
       const response = await api.get(`${BASE_URL}`, { params: request });
+      console.log('✅ Clientes obtidos da API:', response.data);
       return response.data;
     } catch (error) {
-      console.warn('⚠️ API indisponível, usando dados locais');
-      return localStore.listar(request);
+      console.error('❌ Erro ao buscar clientes da API:', error);
+      throw error;
     }
   },
 
@@ -319,17 +47,13 @@ export const clienteService = {
    * Obtém um cliente por ID
    */
   async obterPorId(id: string): Promise<Cliente> {
-    if (useLocalData) {
-      console.log(`📋 [LOCAL] Obtendo cliente ${id}`);
-      return localStore.obterPorId(id);
-    }
-
     try {
+      console.log(`📋 Buscando cliente ${id} da API real`);
       const response = await api.get(`${BASE_URL}/${id}`);
       return response.data;
     } catch (error) {
-      console.warn('⚠️ API indisponível, usando dados locais');
-      return localStore.obterPorId(id);
+      console.error(`❌ Erro ao buscar cliente ${id}:`, error);
+      throw error;
     }
   },
 
@@ -337,18 +61,14 @@ export const clienteService = {
    * Cria um novo cliente
    */
   async criar(request: CriarClienteRequest, ipOrigem?: string): Promise<Cliente> {
-    if (useLocalData) {
-      console.log('✨ [LOCAL] Criando novo cliente');
-      return localStore.criar(request);
-    }
-
     try {
+      console.log('✨ Criando novo cliente via API real');
       const headers = ipOrigem ? { 'X-Client-IP': ipOrigem } : {};
       const response = await api.post(`${BASE_URL}`, request, { headers });
       return response.data;
     } catch (error) {
-      console.warn('⚠️ API indisponível, usando dados locais');
-      return localStore.criar(request);
+      console.error('❌ Erro ao criar cliente:', error);
+      throw error;
     }
   },
 
@@ -356,17 +76,13 @@ export const clienteService = {
    * Atualiza um cliente existente
    */
   async atualizar(id: string, request: AtualizarClienteRequest): Promise<Cliente> {
-    if (useLocalData) {
-      console.log(`🔄 [LOCAL] Atualizando cliente ${id}`);
-      return localStore.atualizar(id, request);
-    }
-
     try {
+      console.log(`🔄 Atualizando cliente ${id} via API real`);
       const response = await api.put(`${BASE_URL}/${id}`, request);
       return response.data;
     } catch (error) {
-      console.warn('⚠️ API indisponível, usando dados locais');
-      return localStore.atualizar(id, request);
+      console.error(`❌ Erro ao atualizar cliente ${id}:`, error);
+      throw error;
     }
   },
 
@@ -374,20 +90,14 @@ export const clienteService = {
    * Remove um cliente (soft delete)
    */
   async remover(id: string, motivo?: string): Promise<boolean> {
-    if (useLocalData) {
-      console.log(`🗑️ [LOCAL] Removendo cliente ${id}`);
-      await localStore.remover(id);
-      return true;
-    }
-
     try {
+      console.log(`🗑️ Removendo cliente ${id} via API real`);
       const params = motivo ? { motivo } : {};
       const response = await api.delete(`${BASE_URL}/${id}`, { params });
       return response.data;
     } catch (error) {
-      console.warn('⚠️ API indisponível, usando dados locais');
-      await localStore.remover(id);
-      return true;
+      console.error(`❌ Erro ao remover cliente ${id}:`, error);
+      throw error;
     }
   },
 
@@ -411,12 +121,6 @@ export const clienteService = {
    * Busca cliente por CPF
    */
   async buscarPorCpf(cpf: string): Promise<Cliente | null> {
-    if (useLocalData) {
-      const cpfLimpo = cpf.replace(/\D/g, '');
-      const cliente = localStore['clientes'].find((c: Cliente) => c.cpf === cpfLimpo);
-      return cliente || null;
-    }
-
     try {
       const response = await api.get(`${BASE_URL}/cpf/${encodeURIComponent(cpf)}`);
       return response.data;
@@ -425,6 +129,34 @@ export const clienteService = {
         return null;
       }
       throw error;
+    }
+  },
+
+  /**
+   * Verifica se CPF já existe
+   */
+  async cpfJaExiste(cpf: string, excluirId?: string): Promise<boolean> {
+    try {
+      const params = excluirId ? { excluirId } : {};
+      const response = await api.get(`${BASE_URL}/cpf/${encodeURIComponent(cpf)}/exists`, { params });
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erro ao verificar CPF:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Verifica se email já existe
+   */
+  async emailJaExiste(email: string, excluirId?: string): Promise<boolean> {
+    try {
+      const params = excluirId ? { excluirId } : {};
+      const response = await api.get(`${BASE_URL}/email/${encodeURIComponent(email)}/exists`, { params });
+      return response.data;
+    } catch (error) {
+      console.error('❌ Erro ao verificar email:', error);
+      return false;
     }
   },
 
@@ -544,17 +276,13 @@ export const clienteService = {
    * Obtém estatísticas gerais dos clientes
    */
   async obterEstatisticas(): Promise<ClienteEstatisticas> {
-    if (useLocalData) {
-      console.log('📈 [LOCAL] Calculando estatísticas dos dados gerados');
-      return localStore.obterEstatisticas();
-    }
-
     try {
+      console.log('📈 Buscando estatísticas da API real');
       const response = await api.get(`${BASE_URL}/estatisticas`);
       return response.data;
     } catch (error) {
-      console.warn('⚠️ API indisponível, usando dados locais');
-      return localStore.obterEstatisticas();
+      console.error('❌ Erro ao buscar estatísticas:', error);
+      throw error;
     }
   },
 
@@ -570,17 +298,6 @@ export const clienteService = {
       responseType: 'blob'
     });
     return response.data;
-  },
-
-  // === UTILITÁRIOS ===
-
-  /**
-   * Reset dados para dados gerados iniciais (desenvolvimento)
-   */
-  resetarDados(): void {
-    if (useLocalData) {
-      localStore.resetDados();
-    }
   }
 };
 

@@ -1,6 +1,9 @@
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
 using CoreApp.Infrastructure.Services;
 using CoreApp.Infrastructure.Middleware;
+using CoreApp.Infrastructure.Data.Context;
+using CoreApp.Infrastructure.Data.Seeds;
 using CoreApp.Domain.Interfaces.Services;
 using CoreApp.Domain.Interfaces.Common;
 using CoreApp.Api.Services;
@@ -30,15 +33,51 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 // Add Core services
-builder.Services.AddMemoryCache();
+// *** CACHE DESABILITADO EM DESENVOLVIMENTO ***
+if (builder.Environment.IsDevelopment())
+{
+    // Memory cache desabilitado em desenvolvimento para facilitar debugging
+    builder.Services.AddSingleton<Microsoft.Extensions.Caching.Memory.IMemoryCache, DisabledMemoryCache>();
+}
+else
+{
+    // Cache habilitado apenas em produção
+    builder.Services.AddMemoryCache();
+}
+
 builder.Services.AddLogging();
 builder.Services.AddHttpContextAccessor();
+
+// Add Entity Framework database context
+builder.Services.AddDbContext<CoreAppDbContext>(options =>
+{
+    // Connection string para desenvolvimento local
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
+                          "Host=localhost;Database=coreapp_dev;Username=postgres;Password=postgres;Port=5432";
+    
+    options.UseNpgsql(connectionString);
+    
+    // *** CACHE EF CORE DESABILITADO EM DESENVOLVIMENTO ***
+    if (builder.Environment.IsDevelopment())
+    {
+        // Desabilita cache de service provider do EF Core
+        options.EnableServiceProviderCaching(false);
+        
+        // Habilita logs detalhados e sensitive data para debugging
+        options.LogTo(Console.WriteLine, LogLevel.Information)
+               .EnableSensitiveDataLogging()
+               .EnableDetailedErrors();
+    }
+});
 
 // Add custom services (usando mocks para desenvolvimento)
 builder.Services.AddScoped<IModuleValidationService, MockModuleValidationService>();
 
 // Configuração básica de tenant context
 builder.Services.AddScoped<ITenantContext, CoreApp.Infrastructure.Services.TenantContext>();
+
+// Database seeder para dados com Bogus
+builder.Services.AddScoped<DatabaseSeeder>();
 
 // *** SISTEMA DE VERTICAIS DINÂMICAS ***
 // Adiciona o sistema completo de verticais com DI avançado

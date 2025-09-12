@@ -18,7 +18,7 @@ public class DatabaseSeeder
 
     // Configurações do seeding
     private const int PRODUTOS_COUNT = 10000;
-    private const int CLIENTES_COUNT = 1000;
+    private const int CLIENTES_COUNT = 250; // 🎯 Alterado para 250 clientes
     private const int FORNECEDORES_COUNT = 500;
     private const int CATEGORIAS_COUNT = 100;
     private const int USUARIOS_COUNT = 50;
@@ -151,43 +151,128 @@ public class DatabaseSeeder
     }
 
     /// <summary>
-    /// Seed clientes brasileiros
+    /// Seed clientes brasileiros com dados mais realistas
+    /// Gera 250 clientes com CPFs válidos, emails únicos e telefones brasileiros
     /// </summary>
     private async Task SeedClientes(string tenantId)
     {
-        _logger.LogInformation("👥 Criando clientes brasileiros...");
+        _logger.LogInformation("👥 Criando 250 clientes brasileiros com dados realistas...");
 
         var clientesFaker = new Faker<ClienteEntity>("pt_BR")
             .RuleFor(c => c.Id, f => Guid.NewGuid())
             .RuleFor(c => c.TenantId, f => tenantId)
             .RuleFor(c => c.Nome, f => f.Person.FullName)
-            .RuleFor(c => c.CPF, f => f.Random.Replace("###.###.###-##"))
-            .RuleFor(c => c.Email, (f, c) => f.Internet.Email(c.Nome))
-            .RuleFor(c => c.Telefone, f => f.Phone.PhoneNumber("(##) #####-####"))
+            .RuleFor(c => c.CPF, f => GerarCpfValido()) // CPF válido brasileiro
+            .RuleFor(c => c.Email, (f, c) => GerarEmailUnico(c.Nome, f)) // Email único baseado no nome
+            .RuleFor(c => c.Telefone, f => GerarTelefoneBrasileiro(f)) // Telefone brasileiro realista
             .RuleFor(c => c.DataCadastro, f => f.Date.Between(DateTime.Now.AddYears(-2), DateTime.Now))
-            .RuleFor(c => c.Ativo, f => f.Random.Bool(0.98f))
+            .RuleFor(c => c.Ativo, f => f.Random.Bool(0.95f)) // 95% ativos
             .RuleFor(c => c.DataCriacao, (f, c) => c.DataCadastro)
-            .RuleFor(c => c.DataAtualizacao, f => f.Date.Recent(180));
+            .RuleFor(c => c.DataAtualizacao, f => f.Date.Recent(180))
+            .RuleFor(c => c.UltimaMovimentacao, f => f.Date.Recent(90));
 
         var clientes = new List<ClienteEntity>();
         
-        for (int i = 0; i < CLIENTES_COUNT; i += BATCH_SIZE)
+        // Como são apenas 250, podemos gerar todos de uma vez
+        var todosClientes = clientesFaker.Generate(CLIENTES_COUNT);
+        
+        // Garantir que emails sejam únicos (fallback se houver duplicatas)
+        var emailsUnicos = new HashSet<string>();
+        foreach (var cliente in todosClientes)
         {
-            var batchSize = Math.Min(BATCH_SIZE, CLIENTES_COUNT - i);
-            var batch = clientesFaker.Generate(batchSize);
-            
-            clientes.AddRange(batch);
-
-            if (i % 100 == 0)
+            while (emailsUnicos.Contains(cliente.Email ?? ""))
             {
-                _logger.LogInformation("Processando clientes: {Current}/{Total}", i, CLIENTES_COUNT);
+                cliente.Email = GerarEmailUnico(cliente.Nome, _faker);
             }
+            emailsUnicos.Add(cliente.Email ?? "");
         }
+        
+        clientes.AddRange(todosClientes);
 
         await _context.Clientes.AddRangeAsync(clientes);
         await _context.SaveChangesAsync();
 
-        _logger.LogInformation("✅ {Count} clientes inseridos com sucesso!", clientes.Count);
+        _logger.LogInformation("✅ {Count} clientes brasileiros criados com sucesso!", clientes.Count);
+        _logger.LogInformation("📊 Estatísticas: {Ativos} ativos, {Inativos} inativos", 
+            clientes.Count(c => c.Ativo), clientes.Count(c => !c.Ativo));
+    }
+
+    /// <summary>
+    /// Gera um CPF válido brasileiro com formatação
+    /// </summary>
+    private string GerarCpfValido()
+    {
+        var cpf = new int[11];
+        var random = new Random();
+
+        // Gera os 9 primeiros dígitos
+        for (int i = 0; i < 9; i++)
+        {
+            cpf[i] = random.Next(0, 10);
+        }
+
+        // Calcula o primeiro dígito verificador
+        int soma = 0;
+        for (int i = 0; i < 9; i++)
+        {
+            soma += cpf[i] * (10 - i);
+        }
+        cpf[9] = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+
+        // Calcula o segundo dígito verificador
+        soma = 0;
+        for (int i = 0; i < 10; i++)
+        {
+            soma += cpf[i] * (11 - i);
+        }
+        cpf[10] = soma % 11 < 2 ? 0 : 11 - (soma % 11);
+
+        // Formata o CPF
+        return $"{cpf[0]}{cpf[1]}{cpf[2]}.{cpf[3]}{cpf[4]}{cpf[5]}.{cpf[6]}{cpf[7]}{cpf[8]}-{cpf[9]}{cpf[10]}";
+    }
+
+    /// <summary>
+    /// Gera email único baseado no nome da pessoa
+    /// </summary>
+    private string GerarEmailUnico(string nome, Faker faker)
+    {
+        var dominios = new[] { "gmail.com", "hotmail.com", "yahoo.com.br", "outlook.com", "uol.com.br", "bol.com.br" };
+        var nomeNormalizado = nome.ToLower()
+            .Replace(" ", "")
+            .Replace("ã", "a").Replace("á", "a").Replace("à", "a").Replace("â", "a")
+            .Replace("é", "e").Replace("ê", "e")
+            .Replace("í", "i")
+            .Replace("ó", "o").Replace("ô", "o").Replace("õ", "o")
+            .Replace("ú", "u").Replace("ü", "u")
+            .Replace("ç", "c");
+
+        var dominio = faker.PickRandom(dominios);
+        var sufixo = faker.Random.Int(1, 999);
+        
+        return $"{nomeNormalizado}{sufixo}@{dominio}";
+    }
+
+    /// <summary>
+    /// Gera telefone brasileiro realista (celular ou fixo)
+    /// </summary>
+    private string GerarTelefoneBrasileiro(Faker faker)
+    {
+        var dddsBrasil = new[] { "11", "12", "13", "14", "15", "16", "17", "18", "19", "21", "22", "24", "27", "28", "31", "32", "33", "34", "35", "37", "38", "41", "42", "43", "44", "45", "46", "47", "48", "49", "51", "53", "54", "55", "61", "62", "63", "64", "65", "66", "67", "68", "69", "71", "73", "74", "75", "77", "79", "81", "82", "83", "84", "85", "86", "87", "88", "89", "91", "92", "93", "94", "95", "96", "97", "98", "99" };
+        var ddd = faker.PickRandom(dddsBrasil);
+        
+        // 70% celular (9 dígitos), 30% fixo (8 dígitos)
+        if (faker.Random.Bool(0.7f))
+        {
+            // Celular: (XX) 9XXXX-XXXX
+            var numero = $"9{faker.Random.Int(1000, 9999)}-{faker.Random.Int(1000, 9999)}";
+            return $"({ddd}) {numero}";
+        }
+        else
+        {
+            // Fixo: (XX) XXXX-XXXX
+            var numero = $"{faker.Random.Int(2000, 9999)}-{faker.Random.Int(1000, 9999)}";
+            return $"({ddd}) {numero}";
+        }
     }
 
     /// <summary>

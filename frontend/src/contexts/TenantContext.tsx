@@ -130,7 +130,7 @@ const AVAILABLE_MODULES: Module[] = [
     name: 'Administração',
     description: 'Ferramentas administrativas',
     icon: 'shield',
-    shortcut: 'F12',
+    shortcut: 'Ctrl+F12', // F12 livre para Dev Tools, Ctrl+F12 para admin
     isActive: false,
     path: '/admin',
     order: 12,
