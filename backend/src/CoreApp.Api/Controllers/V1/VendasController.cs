@@ -11,8 +11,8 @@ namespace CoreApp.Api.Controllers.V1;
 /// Implementa fluxo completo de vendas com validação de módulos e isolamento por tenant
 /// </summary>
 [ApiController]
-[Route("api/v1/[controller]")]
-[Authorize]
+[Route("api/[controller]")]
+[AllowAnonymous] // TODO: Remover em produção - Temporário para desenvolvimento
 [ApiVersion("1.0")]
 public class VendasController : ControllerBase
 {

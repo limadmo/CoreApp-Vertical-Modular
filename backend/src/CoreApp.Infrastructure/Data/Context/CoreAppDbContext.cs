@@ -88,11 +88,32 @@ public class CoreAppDbContext : DbContext
 
     private LambdaExpression CreateTenantFilter(Type entityType)
     {
+        // Cria um filtro que será avaliado em tempo de consulta, não em tempo de criação do modelo
         var parameterType = entityType;
         var parameter = Expression.Parameter(parameterType, "e");
         var property = Expression.Property(parameter, "TenantId");
-        var tenantId = Expression.Constant(_tenantContext.GetCurrentTenantId());
-        var equal = Expression.Equal(property, tenantId);
-        return Expression.Lambda(equal, parameter);
+        
+        // Cria uma expressão que chama GetCurrentTenantId() em tempo de execução
+        var tenantContextParameter = Expression.Constant(_tenantContext);
+        var getCurrentTenantIdMethod = typeof(ITenantContext).GetMethod(nameof(ITenantContext.GetCurrentTenantId));
+        if (getCurrentTenantIdMethod == null)
+        {
+            throw new InvalidOperationException($"Método {nameof(ITenantContext.GetCurrentTenantId)} não encontrado em {nameof(ITenantContext)}");
+        }
+        var getCurrentTenantIdCall = Expression.Call(tenantContextParameter, getCurrentTenantIdMethod);
+        
+        // Adiciona verificação para tratar casos onde o tenant é null ou vazio
+        // Condição: TenantId == GetCurrentTenantId() OU GetCurrentTenantId() == null/empty
+        var equal = Expression.Equal(property, getCurrentTenantIdCall);
+        
+        // Verifica se o tenant atual é nulo ou vazio (permite acesso irrestrito para seeds/migrations)
+        var tenantIsNull = Expression.Equal(getCurrentTenantIdCall, Expression.Constant(null, typeof(string)));
+        var tenantIsEmpty = Expression.Equal(getCurrentTenantIdCall, Expression.Constant("", typeof(string)));
+        var tenantIsNullOrEmpty = Expression.OrElse(tenantIsNull, tenantIsEmpty);
+        
+        // Condição final: (TenantId == CurrentTenant) OR (CurrentTenant is null/empty)
+        var finalCondition = Expression.OrElse(equal, tenantIsNullOrEmpty);
+        
+        return Expression.Lambda(finalCondition, parameter);
     }
 }

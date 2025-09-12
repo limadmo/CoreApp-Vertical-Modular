@@ -117,75 +117,8 @@ services:
     profiles:
       - development
 
-  # CoreApp Application
-  coreapp:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: coreapp_backend
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      traefik:
-        condition: service_healthy
-    environment:
-      # Database
-      - ConnectionStrings__DefaultConnection=Server=postgres;Port=5432;Database=coreapp_saas_${ENV:-development};User Id=admin;Password=${DB_PASSWORD:-dev123456};
-      
-      # Security
-      - JWT__Secret=${JWT_SECRET:-sua-chave-secreta-muito-segura-aqui-com-pelo-menos-32-caracteres}
-      - JWT__Issuer=CoreAPIBrasil
-      - JWT__Audience=CoreAppClientsBrasil
-      
-      # Multi-tenant
-      - MultiTenant__DefaultTenant=demo
-      - MultiTenant__TenantDomain=${DOMAIN:-coreapp-dev.diegolima.dev}
-      - MultiTenant__AdminDomain=admin.${DOMAIN:-coreapp-dev.diegolima.dev}
-      
-      # Rate Limiting
-      - RateLimit__MaxRequests=100
-      - RateLimit__WindowMinutes=1
-      
-      # CORS
-      - CORS__AllowedOrigins__0=https://*.${DOMAIN:-coreapp-dev.diegolima.dev}
-      - CORS__AllowedOrigins__1=http://localhost:3000
-      - CORS__AllowedOrigins__2=http://localhost:8080
-      
-      # Environment
-      - ASPNETCORE_ENVIRONMENT=${ENVIRONMENT:-Production}
-      - ASPNETCORE_URLS=http://+:8080
-      - TZ=America/Sao_Paulo
-      
-    networks:
-      - coreapp_network
-      - dokploy-network  # Rede do Dokploy para Traefik
-    volumes:
-      - app_logs:/app/logs
-    labels:
-      # Traefik configuration
-      - "traefik.enable=true"
-      - "traefik.docker.network=coreapp_network"
-      
-      # API Router principal
-      - "traefik.http.routers.coreapp-api.rule=Host(`localhost`)"
-      - "traefik.http.routers.coreapp-api.entrypoints=web"
-      - "traefik.http.routers.coreapp-api.service=coreapp-api"
-      
-      # Service configuration
-      - "traefik.http.services.coreapp-api.loadbalancer.server.port=8080"
-      - "traefik.http.services.coreapp-api.loadbalancer.healthcheck.path=/health"
-      - "traefik.http.services.coreapp-api.loadbalancer.healthcheck.interval=30s"
-      - "traefik.http.services.coreapp-api.loadbalancer.sticky.cookie=true"
-      - "traefik.http.services.coreapp-api.loadbalancer.sticky.cookie.name=coreapp_session"
-      
-      # Middlewares aplicados
-      - "traefik.http.routers.coreapp-api.middlewares=cors-dev@file,rate-limit@file,compression@file"
-      
-      # Dokploy metadata
-      - "com.dokploy.service=coreapp-coreapi"
-      - "com.dokploy.environment=${ENVIRONMENT:-production}"
-      - "com.dokploy.project=coreapp-saas"
+  # DESENVOLVIMENTO: CoreApp backend roda localmente via 'dotnet run'
+  # Serviço removido para desenvolvimento - usar apenas para produção
 
 networks:
   coreapp_network:

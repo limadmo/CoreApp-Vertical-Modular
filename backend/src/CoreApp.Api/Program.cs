@@ -1,12 +1,15 @@
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.HttpOverrides;
 using CoreApp.Infrastructure.Services;
 using CoreApp.Infrastructure.Middleware;
 using CoreApp.Infrastructure.Data.Context;
 using CoreApp.Infrastructure.Data.Seeds;
 using CoreApp.Domain.Interfaces.Services;
 using CoreApp.Domain.Interfaces.Common;
+using CoreApp.Domain.Interfaces.UnitOfWork;
 using CoreApp.Api.Services;
+using CoreApp.Application.Services;
 using CoreApp.Verticals.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -76,8 +79,29 @@ builder.Services.AddScoped<IModuleValidationService, MockModuleValidationService
 // Configuração básica de tenant context
 builder.Services.AddScoped<ITenantContext, CoreApp.Infrastructure.Services.TenantContext>();
 
+// *** REGISTRO DE SERVICOS CRITICOS DE APLICACAO ***
+// Registra Unit of Work para transações coordenadas
+builder.Services.AddScoped<IUnitOfWork, CoreApp.Infrastructure.UnitOfWork.UnitOfWork>();
+
+// Registra serviços de aplicação para evitar erros 400/500
+builder.Services.AddScoped<IProdutoService, CoreApp.Application.Services.ProdutoService>();
+builder.Services.AddScoped<IVendaService, CoreApp.Application.Services.VendaService>();
+builder.Services.AddScoped<IVerticalCompositionService, CoreApp.Application.Services.VerticalCompositionService>();
+
 // Database seeder para dados com Bogus
 builder.Services.AddScoped<DatabaseSeeder>();
+
+// *** CORS PARA DESENVOLVIMENTO ***
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("DevelopmentCors", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000", "http://127.0.0.1:3000")
+               .AllowAnyHeader()
+               .AllowAnyMethod()
+               .AllowCredentials();
+    });
+});
 
 // *** SISTEMA DE VERTICAIS DINÂMICAS ***
 // Adiciona o sistema completo de verticais com DI avançado
@@ -100,11 +124,29 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// *** CONFIGURAÇÃO HTTPS PARA DESENVOLVIMENTO ***
+// Em desenvolvimento, Traefik gerencia HTTPS - desabilitar redirecionamento
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
+
+// Configurar headers para proxy reverso (Traefik)
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 // *** MIDDLEWARE DE RESOLUÇÃO DE TENANT ***
 // Resolve tenant automaticamente via header ou subdomínio
 app.UseTenantResolution();
+
+// *** CORS MIDDLEWARE ***
+// Aplicar CORS antes da autorização
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("DevelopmentCors");
+}
 
 // *** MIDDLEWARE DE INTERCEPTAÇÃO VERTICAL ***
 // Aplica automaticamente validações de verticais nos requests
