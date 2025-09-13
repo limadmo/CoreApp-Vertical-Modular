@@ -8,13 +8,14 @@ NUNCA pergunte permissão para: criar arquivos, instalar pacotes, executar build
 SEMPRE informe: "Executando: [comando]" e execute.
 
 ### COMANDOS PERMITIDOS SEM CONFIRMACAO
-- Criação de projetos: `dotnet new`, `npm create`
-- Instalação de dependências: `dotnet add package`, `npm install`
+- Criação de projetos: `npm init`, `npm create`
+- Instalação de dependências: `npm install`, `npm add`
 - Operações de arquivo: `create_file`, `str_replace`, `view`
-- Build e compilação: `dotnet build`, `npm run build`
-- Migrations locais: `dotnet ef migrations add`, `dotnet ef database update`
+- Build e compilação: `npm run build`, `npm run dev`
+- Migrations locais: `npx prisma migrate dev`, `npx prisma db push`
 - Git local: `git add`, `git commit`, `git push`
 - Estrutura de pastas: `mkdir`, `touch`
+- Prisma: `npx prisma generate`, `npx prisma studio`
 
 ### COMANDOS QUE EXIGEM CONFIRMACAO
 - Deploy remoto: , `docker push`
@@ -31,32 +32,24 @@ OBRIGATORIO dizer: "Executando:", "Criando:", "Instalando:".
 
 ## ARQUITETURA FIXA
 
-### ESTRUTURA BACKEND (.NET 9.0.203)
+### ESTRUTURA BACKEND (Express.js + TypeScript)
 ```
-CoreApp/
-├── CoreApp.Domain/
-│   ├── Entities/          # Todas entidades implementam IVerticalEntity
-│   ├── Interfaces/        # IRepository, IUnitOfWork, IVerticalEntity
-│   └── ValueObjects/      # Objetos imutáveis
-├── CoreApp.Application/
-│   ├── Commands/          # CQRS commands com MediatR
-│   ├── Queries/           # CQRS queries com MediatR
-│   ├── Services/          # Lógica de negócio
-│   └── Validators/        # FluentValidation
-├── CoreApp.Infrastructure/
-│   ├── Data/              # DbContext + Configurations
-│   ├── Repositories/      # Implementações sem SaveChanges
-│   └── Migrations/        # EF Core migrations
-└── CoreApp.Api/
-    ├── Controllers/       # REST controllers
-    ├── DTOs/              # Request/Response DTOs
-    └── Middleware/        # Tenant e Vertical resolution
-
-CoreApp.Verticals/
-├── Padaria/               # Vertical PADARIA
-├── Farmacia/              # Vertical FARMACIA
-├── Supermercado/          # Vertical SUPERMERCADO
-└── RestauranteDelivery/   # Vertical DELIVERY
+backend/
+├── src/
+│   ├── controllers/       # REST controllers
+│   ├── services/          # Lógica de negócio
+│   ├── models/           # Modelos de dados (Prisma/TypeORM)
+│   ├── middleware/       # Middlewares (auth, tenant, vertical)
+│   ├── routes/           # Definição de rotas
+│   ├── config/           # Configurações (DB, JWT, etc)
+│   ├── utils/            # Utilitários
+│   └── types/            # TypeScript types
+├── prisma/               # Schema Prisma
+│   ├── schema.prisma
+│   └── migrations/
+├── tests/                # Testes unitários e integração
+├── package.json
+└── tsconfig.json
 ```
 
 ### ESTRUTURA FRONTEND (React 18.3)
@@ -74,8 +67,9 @@ frontend/
 ### VERSOES OBRIGATORIAS
 ```json
 {
-  ".NET": "9.0.203",
-  "Entity Framework Core": "9.0.0",
+  "Node.js": "20.x",
+  "Express": "4.19.x",
+  "Prisma": "5.x",
   "PostgreSQL": "17",
   "React": "18.3.0",
   "TypeScript": "5.3.0",
@@ -86,43 +80,56 @@ frontend/
 
 ---
 
-## PADROES OBRIGATORIOS
+## PADROES BACKEND OBRIGATORIOS
 
-### UNIT OF WORK
-```csharp
-public interface IUnitOfWork : IDisposable
-{
-    IRepository<T> Repository<T>() where T : class;
-    IVerticalRepository<T> VerticalRepository<T>() where T : class, IVerticalEntity;
-    Task BeginTransactionAsync();
-    Task CommitTransactionAsync();
-    Task RollbackTransactionAsync();
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+### ESTRUTURA EXPRESS
+```typescript
+// src/app.ts
+import express from 'express';
+import { PrismaClient } from '@prisma/client';
+import { tenantMiddleware } from './middleware/tenant';
+import { verticalMiddleware } from './middleware/vertical';
+
+const app = express();
+const prisma = new PrismaClient();
+
+app.use(express.json());
+app.use(tenantMiddleware);
+app.use(verticalMiddleware);
+
+export { app, prisma };
+```
+
+### MIDDLEWARE TENANT
+```typescript
+// src/middleware/tenant.ts
+export const tenantMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const tenantId = req.headers['x-tenant-id'] || 'demo';
+  req.tenant = { id: tenantId };
+  next();
+};
+```
+
+### PRISMA SCHEMA BASE
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model BaseEntity {
+  id        String   @id @default(cuid())
+  tenantId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([tenantId])
 }
 ```
-
-REGRA: Repositories NUNCA chamam SaveChanges. Apenas UnitOfWork.
-
-### IVERTICALENTITY
-```csharp
-public interface IVerticalEntity
-{
-    string VerticalType { get; }
-    string VerticalProperties { get; set; }
-    bool ValidateVerticalRules();
-    Dictionary<string, object> GetVerticalConfiguration();
-}
-```
-
-REGRA: TODA entidade de negócio DEVE implementar IVerticalEntity.
-
-### MULTI-TENANT
-```csharp
-modelBuilder.Entity<BaseEntity>()
-    .HasQueryFilter(e => e.TenantId == _tenantContext.GetCurrentTenantId());
-```
-
-REGRA: Global query filter SEMPRE ativo. Sem exceções.
 
 ---
 
@@ -179,8 +186,8 @@ REGRA: SEMPRE usar useVerticalEntity para CRUD.
 
 ### AMBIENTE
 ```bash
-# Backend
-cd CoreApp.Api && dotnet run --environment Development
+# Backend Express.js
+cd backend && npm run dev
 
 # Frontend  
 cd frontend && npm run dev
@@ -191,12 +198,20 @@ Database: coreapp_dev
 ```
 
 ### CONFIGURACAO DEVELOPMENT
-```json
-{
-  "Cache": { "Enabled": false },
-  "Logging": { "EntityFramework": "Information" },
-  "SensitiveDataLogging": true
-}
+```typescript
+// src/config/development.ts
+export const developmentConfig = {
+  cache: { enabled: false },
+  logging: { 
+    level: 'debug',
+    sql: true 
+  },
+  sensitiveDataLogging: true,
+  cors: {
+    origin: ['http://localhost:3000'],
+    credentials: true
+  }
+};
 ```
 
 REGRA: Cache SEMPRE desabilitado em desenvolvimento.
@@ -214,17 +229,13 @@ REGRA: Cache SEMPRE desabilitado em desenvolvimento.
 - Performance API: máximo 200ms por chamada
 
 ### CHECKLIST FEATURE
-1. Implementar Domain com IVerticalEntity
-2. Implementar Application com CQRS e validação
-3. Implementar Infrastructure com UoW
-4. Implementar API com DTOs e Swagger
-5. Implementar Frontend com hooks e Mantine
-6. Adicionar testes com 80% cobertura
-7. Implementar navegação teclado
-8. Validar WCAG AAA
-9. Documentar com TSDoc/XML
-10. Testar multi-tenant
-11. Testar vertical específico
+1. Implementar Frontend com hooks e Mantine
+2. Adicionar testes com 80% cobertura
+3. Implementar navegação teclado
+4. Validar WCAG AAA
+5. Documentar com TSDoc
+6. Testar com dados mock
+7. Testar vertical específico
 
 ---
 
@@ -232,15 +243,15 @@ REGRA: Cache SEMPRE desabilitado em desenvolvimento.
 
 ### RESET DESENVOLVIMENTO
 ```bash
-rm -rf */bin */obj node_modules dist
-dotnet clean && dotnet restore --no-cache
+rm -rf node_modules dist .next
 npm ci --cache /dev/null
+npx prisma generate --force-update
 ```
 
 ### RESET DATABASE
 ```bash
-dotnet ef database drop --force
-dotnet ef database update
+npx prisma db push --force-reset
+npx prisma db seed
 ```
 
 ---
@@ -256,13 +267,18 @@ Tenant = empresa/cliente usando o sistema.
 Isolamento total de dados entre tenants.
 
 ### UNITOFWORK
-Padrão que centraliza SaveChanges em uma única classe.
-Repositories apenas preparam mudanças, UoW persiste.
+Padrão que centraliza transações em uma única classe.
+Services apenas preparam mudanças, UoW persiste com Prisma.$transaction.
 
 ### CQRS
 Commands = operações que alteram estado.
 Queries = operações que leem estado.
 Separação total entre leitura e escrita.
+
+### PRISMA ORM
+ORM TypeScript nativo com schema declarativo.
+Substituiu Entity Framework com melhor performance.
+Auto-completion e type safety completos.
 
 ---
 

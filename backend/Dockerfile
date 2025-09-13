@@ -1,63 +1,118 @@
-# CoreApp Backend - Dockerfile para .NET 9.0.1
-# Multi-stage build para otimização de imagem
+# Multi-stage Dockerfile for Node.js Backend
+# Suporte para desenvolvimento e produção
 
-# Stage 1: Build
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
-WORKDIR /app
+# ====================================
+# STAGE 1: BASE IMAGE
+# ====================================
+FROM node:20-alpine AS base
 
-# Copiar todo o código fonte
-COPY src/ ./src/
-
-# Build da aplicação com restore
-WORKDIR /app/src/CoreApp.Api
-RUN dotnet restore
-RUN dotnet publish -c Release -o /app/publish
-
-# Stage 2: Development with SDK for migrations
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS final
-WORKDIR /app
-
-# Configurações de ambiente brasileiro
-ENV TZ=America/Sao_Paulo
-ENV DOTNET_CULTURE=pt-BR
-ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_URLS=http://+:8080
-
-# Instalar dependências do sistema (para PostgreSQL e timezone brasileiros)
-RUN apt-get update && apt-get install -y \
+# Instalar dependências essenciais incluindo OpenSSL para Prisma
+RUN apk add --no-cache \
+    curl \
+    bash \
     tzdata \
-    locales \
-    && locale-gen pt_BR.UTF-8 \
-    && rm -rf /var/lib/apt/lists/*
+    openssl \
+    openssl-dev \
+    && cp /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime \
+    && echo "America/Sao_Paulo" > /etc/timezone
 
-# Configurar timezone brasileiro
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+# Configurar timezone
+ENV TZ=America/Sao_Paulo
+
+# Definir diretório de trabalho
+WORKDIR /app
 
 # Criar usuário não-root para segurança
-RUN addgroup --system --gid 1001 coreapp \
-    && adduser --system --uid 1001 --ingroup coreapp coreapp
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S backend -u 1001
 
-# Copiar código fonte para desenvolvimento e build publicado
-COPY --from=build /app/publish /app
-COPY src/ /app/src/
-RUN chown -R coreapp:coreapp /app
+# ====================================
+# STAGE 2: DEPENDENCIES
+# ====================================
+FROM base AS dependencies
 
-# Instalar Entity Framework tools
-RUN dotnet tool install --global dotnet-ef
-ENV PATH="${PATH}:/root/.dotnet/tools"
+# Copiar arquivos de dependências
+COPY package*.json ./
+COPY prisma ./prisma/
 
-# Criar diretório para logs
-RUN mkdir -p /app/logs && chown -R coreapp:coreapp /app/logs
+# Instalar dependências
+RUN npm ci --omit=dev && npm cache clean --force
 
-# Trocar para usuário não-root
-USER coreapp
+# Gerar cliente Prisma
+RUN npx prisma generate
 
-# Expor porta da API
-EXPOSE 8080
+# ====================================
+# STAGE 3: DEVELOPMENT
+# ====================================
+FROM base AS development
 
-# Health check para verificar se API está respondendo
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
+# Instalar dependências de desenvolvimento
+COPY package*.json ./
+RUN npm ci && npm cache clean --force
 
-# Comando de entrada da aplicação
-ENTRYPOINT ["dotnet", "CoreApp.Api.dll"]
+# Copiar código fonte
+COPY . .
+
+# Gerar cliente Prisma
+RUN npx prisma generate
+
+# Criar diretórios necessários
+RUN mkdir -p logs temp uploads
+
+# Ajustar permissões
+RUN chown -R backend:nodejs /app
+USER backend
+
+# Expor porta
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
+# Comando padrão
+CMD ["npm", "run", "dev"]
+
+# ====================================
+# STAGE 4: BUILD
+# ====================================
+FROM dependencies AS build
+
+# Copiar código fonte
+COPY . .
+
+# Executar build
+RUN npm run build
+
+# Remover arquivos desnecessários
+RUN rm -rf src tests .env.example
+
+# ====================================
+# STAGE 5: PRODUCTION
+# ====================================
+FROM base AS production
+
+# Copiar dependências
+COPY --from=dependencies /app/node_modules ./node_modules
+
+# Copiar build da aplicação
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/prisma ./prisma/
+
+# Criar diretórios necessários
+RUN mkdir -p logs temp uploads
+
+# Ajustar permissões
+RUN chown -R backend:nodejs /app
+USER backend
+
+# Expor porta
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl -f http://localhost:3001/health || exit 1
+
+# Comando padrão
+CMD ["npm", "start"]

@@ -1,0 +1,405 @@
+// Prisma Schema - CoreApp Multi-tenant com Soft Delete + Auth + Docs
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+// Temporarily disabled due to configuration issues
+// generator docs {
+//   provider = "prisma-docs-generator"
+//   output   = "../docs/database"
+//   includeRelationFromFields = true
+// }
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+  output   = "../docs/schema.dbml"
+}
+
+generator jsonSchema {
+  provider = "prisma-json-schema-generator"
+  output   = "../docs/json-schema.json"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ====================================
+// CLIENTE - Dados básicos brasileiros
+// ====================================
+model Cliente {
+  id              String    @id @default(cuid())
+  nome            String
+  sobrenome       String
+  cpf             String?
+  dataNascimento  DateTime?
+  
+  // Soft Delete
+  ativo           Boolean   @default(true)
+  dataDelecao     DateTime?
+  motivoDelecao   String?
+  usuarioDelecao  String?
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  dataUltimaAtualizacao     DateTime @updatedAt
+  usuarioCadastro           String   @default("system")
+  usuarioUltimaAtualizacao  String   @default("system")
+  tenantId                  String
+  
+  // Relações
+  vendas          Venda[]
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  
+  @@index([tenantId, ativo])
+  @@index([cpf])
+  @@index([nome])
+  @@map("clientes")
+}
+
+// ====================================
+// PRODUTO - Estrutura comercial básica
+// ====================================
+model Produto {
+  id            String    @id @default(cuid())
+  nome          String
+  codigoBarras  String?
+  precoVenda    Decimal   @db.Decimal(10,2)
+  quantidade    Int       @default(0)
+  lote          String?
+  
+  // Campos específicos para vertical (flexíveis)
+  categoria     String?   // Ex: "Pão Integral", "Doce Caseiro" - sem enum
+  validadeHoras Int?      // Horas após produção (crítico para padaria)
+  tempoPreparo  Int?      // Minutos para preparar o produto
+  ingredientes  String?   // Lista de ingredientes (texto livre)
+  
+  // Soft Delete
+  ativo         Boolean   @default(true)
+  dataDelecao   DateTime?
+  motivoDelecao String?
+  usuarioDelecao String?
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  dataUltimaAtualizacao     DateTime @updatedAt
+  usuarioCadastro           String   @default("system")
+  usuarioUltimaAtualizacao  String   @default("system")
+  tenantId                  String
+  
+  // Relações
+  estoque       Estoque?
+  itensVenda    ItemVenda[]
+  movimentacoes MovimentacaoEstoque[]
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  
+  @@index([tenantId, ativo])
+  @@index([codigoBarras])
+  @@index([nome])
+  @@map("produtos")
+}
+
+// ====================================
+// ESTOQUE - Controle completo
+// ====================================
+model Estoque {
+  id                        String    @id @default(cuid())
+  produtoId                 String    @unique
+  quantidadeAtual           Int       @default(0)
+  quantidadeMinima          Int       @default(0)
+  quantidadeMaxima          Int       @default(1000)
+  precoCusto                Decimal   @db.Decimal(10,2)
+  lote                      String?
+  dataValidade              DateTime?
+  
+  // Soft Delete
+  ativo         Boolean   @default(true)
+  dataDelecao   DateTime?
+  motivoDelecao String?
+  usuarioDelecao String?
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  dataUltimaAtualizacao     DateTime @updatedAt
+  usuarioCadastro           String   @default("system")
+  usuarioUltimaAtualizacao  String   @default("system")
+  tenantId                  String
+  
+  // Relações
+  produto       Produto   @relation(fields: [produtoId], references: [id])
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  
+  @@index([tenantId, ativo])
+  @@index([quantidadeAtual])
+  @@index([dataValidade])
+  @@map("estoque")
+}
+
+// ====================================
+// MOVIMENTAÇÃO ESTOQUE - Histórico completo
+// ====================================
+model MovimentacaoEstoque {
+  id                        String   @id @default(cuid())
+  produtoId                 String
+  tipo                      String   // ENTRADA, SAIDA, AJUSTE
+  quantidade                Int
+  quantidadeAnterior        Int
+  quantidadeAtual           Int
+  motivo                    String
+  vendaId                   String?
+  usuarioId                 String
+  dataMovimentacao          DateTime @default(now())
+  tenantId                  String
+  
+  // NUNCA deletar movimentações - apenas criar estorno
+  movimentacaoEstornoId     String?
+  
+  // Relações
+  produto                   Produto  @relation(fields: [produtoId], references: [id])
+  venda                     Venda?   @relation(fields: [vendaId], references: [id])
+  tenant                    Tenant   @relation(fields: [tenantId], references: [id])
+  
+  @@index([tenantId])
+  @@index([produtoId])
+  @@index([dataMovimentacao])
+  @@index([tipo])
+  @@map("movimentacoes_estoque")
+}
+
+// ====================================
+// SISTEMA DE AUTENTICAÇÃO E ROLES
+// ====================================
+
+// Super Admin - Usuário global que pode criar tenants
+model SuperAdmin {
+  id            String    @id @default(cuid())
+  login         String    @unique // Formato: XX00000X
+  senhaHash     String
+  nome          String
+  email         String    @unique
+  ativo         Boolean   @default(true)
+  
+  // Controle de senha
+  senhaExpiraEm     DateTime?
+  ultimoLogin       DateTime?
+  forcarTrocaSenha  Boolean   @default(false)
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  dataUltimaAtualizacao     DateTime @updatedAt
+  usuarioCadastro           String   @default("system")
+  usuarioUltimaAtualizacao  String   @default("system")
+  
+  // Relações
+  tenantsGerenciados        Tenant[]
+  
+  @@map("super_admins")
+}
+
+// Tenant - Empresa/Loja no sistema
+model Tenant {
+  id                String    @id @default(cuid())
+  nome              String
+  dominio           String?   @unique // Subdomínio para multi-tenant
+  vertical          String?   // PADARIA, FARMACIA, etc - flexível
+  
+  // Configurações
+  ativo             Boolean   @default(true)
+  plano             String    @default("STARTER") // STARTER, PRO, ENTERPRISE
+  dataExpiracao     DateTime?
+  
+  // Soft Delete
+  dataDelecao       DateTime?
+  motivoDelecao     String?
+  usuarioDelecao    String?
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  dataUltimaAtualizacao     DateTime @updatedAt
+  usuarioCadastro           String   @default("system")
+  usuarioUltimaAtualizacao  String   @default("system")
+  superAdminId              String?
+  
+  // Relações
+  superAdmin        SuperAdmin? @relation(fields: [superAdminId], references: [id])
+  usuarios          Usuario[]
+  roles             Role[]
+  clientes          Cliente[]
+  produtos          Produto[]
+  estoques          Estoque[]
+  vendas            Venda[]
+  movimentacoes     MovimentacaoEstoque[]
+  
+  @@index([dominio])
+  @@index([vertical])
+  @@map("tenants")
+}
+
+// Role - Função customizável por tenant
+model Role {
+  id            String    @id @default(cuid())
+  nome          String    // Ex: "Padeiro", "Caixa", "Gerente"
+  descricao     String?
+  tenantId      String
+  
+  // Configurações
+  ativo         Boolean   @default(true)
+  padrao        Boolean   @default(false) // Role padrão para novos usuários
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  dataUltimaAtualizacao     DateTime @updatedAt
+  usuarioCadastro           String   @default("system")
+  usuarioUltimaAtualizacao  String   @default("system")
+  
+  // Relações
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  usuarios      Usuario[]
+  permissoes    RolePermissao[]
+  
+  @@index([tenantId])
+  @@map("roles")
+}
+
+// Permissão - Ações específicas no sistema
+model Permissao {
+  id            String    @id @default(cuid())
+  modulo        String    // vendas, estoque, clientes, produtos
+  acao          String    // criar, visualizar, editar, deletar
+  recurso       String?   // recurso específico se necessário
+  descricao     String?
+  
+  // Configurações
+  ativo         Boolean   @default(true)
+  critica       Boolean   @default(false) // Permissão crítica
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  dataUltimaAtualizacao     DateTime @updatedAt
+  
+  // Relações
+  roles         RolePermissao[]
+  
+  @@unique([modulo, acao, recurso])
+  @@map("permissoes")
+}
+
+// Relacionamento N:N entre Role e Permissão
+model RolePermissao {
+  id           String     @id @default(cuid())
+  roleId       String
+  permissaoId  String
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  usuarioCadastro           String   @default("system")
+  
+  // Relações
+  role         Role       @relation(fields: [roleId], references: [id])
+  permissao    Permissao  @relation(fields: [permissaoId], references: [id])
+  
+  @@unique([roleId, permissaoId])
+  @@map("role_permissoes")
+}
+
+// Usuario - Usuário do tenant com role
+model Usuario {
+  id            String    @id @default(cuid())
+  login         String    // Formato: XX00000X
+  senhaHash     String
+  nome          String
+  email         String?
+  roleId        String
+  tenantId      String
+  
+  // Controle de senha
+  senhaExpiraEm     DateTime?
+  ultimoLogin       DateTime?
+  forcarTrocaSenha  Boolean   @default(true) // Primeira vez sempre força
+  tentativasLogin   Int       @default(0)
+  bloqueadoEm       DateTime?
+  
+  // Soft Delete
+  ativo         Boolean   @default(true)
+  dataDelecao   DateTime?
+  motivoDelecao String?
+  usuarioDelecao String?
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  dataUltimaAtualizacao     DateTime @updatedAt
+  usuarioCadastro           String   @default("system")
+  usuarioUltimaAtualizacao  String   @default("system")
+  
+  // Relações
+  role          Role      @relation(fields: [roleId], references: [id])
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  
+  @@unique([login, tenantId])
+  @@index([tenantId])
+  @@index([email])
+  @@map("usuarios")
+}
+
+// ====================================
+// VENDA - NUNCA deletar (compliance fiscal)
+// ====================================
+model Venda {
+  id              String    @id @default(cuid())
+  clienteId       String?
+  numeroFiscal    String    @unique
+  dataVenda       DateTime  @default(now())
+  
+  // Valores
+  preco           Decimal   @db.Decimal(10,2)
+  desconto        Decimal   @db.Decimal(10,2) @default(0)
+  total           Decimal   @db.Decimal(10,2)
+  formaPagamento  String    // DINHEIRO, CARTAO_DEBITO, CARTAO_CREDITO, PIX
+  
+  // Status - NUNCA deletar vendas
+  status          String    @default("FINALIZADA") // FINALIZADA, CANCELADA, ESTORNADA
+  dataEstorno     DateTime?
+  motivoEstorno   String?
+  usuarioEstorno  String?
+  
+  // Auditoria
+  dataCadastro              DateTime @default(now())
+  dataUltimaAtualizacao     DateTime @updatedAt
+  usuarioCadastro           String   @default("system")
+  usuarioUltimaAtualizacao  String   @default("system")
+  tenantId                  String
+  
+  // Relações
+  cliente         Cliente?  @relation(fields: [clienteId], references: [id])
+  itens           ItemVenda[]
+  movimentacoes   MovimentacaoEstoque[]
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  
+  @@index([tenantId])
+  @@index([numeroFiscal])
+  @@index([dataVenda])
+  @@index([status])
+  @@map("vendas")
+}
+
+// ====================================
+// ITEM VENDA - Detalhes dos produtos vendidos
+// ====================================
+model ItemVenda {
+  id             String  @id @default(cuid())
+  vendaId        String
+  produtoId      String
+  quantidade     Int
+  precoUnitario  Decimal @db.Decimal(10,2)
+  subtotal       Decimal @db.Decimal(10,2)
+  
+  // Relações
+  venda          Venda   @relation(fields: [vendaId], references: [id])
+  produto        Produto @relation(fields: [produtoId], references: [id])
+  
+  @@index([vendaId])
+  @@index([produtoId])
+  @@map("itens_venda")
+}

@@ -1,324 +1,296 @@
 /**
- * Hook para gerenciar estado e operações de Clientes Brasileiros
- * Implementa todas as operações CRUD com React Query
+ * Hook useClientes - React Query + TypeScript
+ * Gerenciamento completo de estado para clientes com cache inteligente
  */
-import { useState, useCallback } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { clienteService } from '../services/clienteService';
-import {
-  Cliente,
-  ClienteResumo,
-  CriarClienteRequest,
-  AtualizarClienteRequest,
-  BuscarClienteRequest,
-  PagedResult,
-  ClienteEstatisticas,
-  ClienteHistorico,
-  HistoricoClienteRequest
-} from '../types/cliente';
+'use client';
 
-// Query Keys para React Query
-export const QUERY_KEYS = {
-  clientes: ['clientes'] as const,
-  cliente: (id: string) => ['clientes', id] as const,
-  clientesPorTermo: (termo: string) => ['clientes', 'buscar', termo] as const,
-  clientePorCpf: (cpf: string) => ['clientes', 'cpf', cpf] as const,
-  clientePorEmail: (email: string) => ['clientes', 'email', email] as const,
-  clientesPorRegiao: (uf: string, cidade?: string) => ['clientes', 'regiao', uf, cidade] as const,
-  clientesEstatisticas: ['clientes', 'estatisticas'] as const,
-  clienteHistorico: (id: string) => ['clientes', id, 'historico'] as const,
-  clientesPorCategoria: (categoria: string) => ['clientes', 'categoria', categoria] as const,
-  aniversariantes: (mes: number, ano?: number) => ['clientes', 'aniversariantes', mes, ano] as const,
-} as const;
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  UseQueryResult,
+  UseMutationResult
+} from '@tanstack/react-query';
+import { notifications } from '@mantine/notifications';
+import {
+  clienteService,
+  Cliente,
+  ClienteCreateRequest,
+  ClienteQueryParams,
+  ClienteListResponse,
+  ClienteEstatisticas
+} from '@/services/clienteService';
+
+// Chaves para React Query
+export const CLIENTE_QUERY_KEYS = {
+  all: ['clientes'] as const,
+  lists: () => [...CLIENTE_QUERY_KEYS.all, 'list'] as const,
+  list: (params: ClienteQueryParams) => [...CLIENTE_QUERY_KEYS.lists(), params] as const,
+  details: () => [...CLIENTE_QUERY_KEYS.all, 'detail'] as const,
+  detail: (id: string) => [...CLIENTE_QUERY_KEYS.details(), id] as const,
+  estatisticas: () => [...CLIENTE_QUERY_KEYS.all, 'estatisticas'] as const,
+  cpf: (cpf: string) => [...CLIENTE_QUERY_KEYS.all, 'cpf', cpf] as const,
+};
 
 /**
- * Hook principal para operações de clientes
+ * Hook para listar clientes com paginação
  */
-export const useClientes = () => {
-  const queryClient = useQueryClient();
-  const [filtros, setFiltros] = useState<BuscarClienteRequest>({
-    pagina: 1,
-    tamanhoPagina: 20,
-    direcaoOrdenacao: 'DESC',
-    ordenarPor: 'DataCadastro',
-    apenasAtivos: true
+export function useClientes(params: ClienteQueryParams = {}) {
+  return useQuery({
+    queryKey: CLIENTE_QUERY_KEYS.list(params),
+    queryFn: () => clienteService.listar(params),
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000,   // 10 minutos (era cacheTime)
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
+}
 
-  // === QUERIES ===
-
-  /**
-   * Lista clientes com paginação
-   */
-  const {
-    data: clientes,
-    isLoading: carregandoClientes,
-    error: erroClientes,
-    refetch: recarregarClientes
-  } = useQuery({
-    queryKey: [...QUERY_KEYS.clientes, filtros],
-    queryFn: () => clienteService.listar(filtros),
-    keepPreviousData: true,
-    staleTime: 30000, // 30 segundos
+/**
+ * Hook para obter cliente por ID
+ */
+export function useCliente(id: string | undefined) {
+  return useQuery({
+    queryKey: CLIENTE_QUERY_KEYS.detail(id!),
+    queryFn: () => clienteService.obterPorId(id!),
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
+}
 
-  /**
-   * Estatísticas gerais
-   */
-  const {
-    data: estatisticas,
-    isLoading: carregandoEstatisticas
-  } = useQuery({
-    queryKey: QUERY_KEYS.clientesEstatisticas,
+/**
+ * Hook para estatísticas de clientes
+ */
+export function useClienteEstatisticas() {
+  return useQuery({
+    queryKey: CLIENTE_QUERY_KEYS.estatisticas(),
     queryFn: () => clienteService.obterEstatisticas(),
-    staleTime: 300000, // 5 minutos
+    staleTime: 2 * 60 * 1000, // 2 minutos (dados mais voláteis)
+    gcTime: 5 * 60 * 1000,
   });
+}
 
-  // === MUTATIONS ===
+/**
+ * Hook para buscar cliente por CPF
+ */
+export function useClientePorCpf(cpf: string | undefined) {
+  return useQuery({
+    queryKey: CLIENTE_QUERY_KEYS.cpf(cpf!),
+    queryFn: () => clienteService.buscarPorCpf(cpf!),
+    enabled: !!cpf && cpf.length >= 11,
+    staleTime: 10 * 60 * 1000, // 10 minutos (CPF é mais estável)
+    gcTime: 30 * 60 * 1000,
+  });
+}
 
-  /**
-   * Criar cliente
-   */
-  const criarClienteMutation = useMutation({
-    mutationFn: ({ request, ip }: { request: CriarClienteRequest; ip?: string }) =>
-      clienteService.criar(request, ip),
-    onSuccess: (novoCliente) => {
-      // Invalida a lista de clientes
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.clientes });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.clientesEstatisticas });
-      
-      // Adiciona o cliente ao cache
-      queryClient.setQueryData(QUERY_KEYS.cliente(novoCliente.id), novoCliente);
+/**
+ * Hook para criar cliente
+ */
+export function useCreateCliente() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (dados: ClienteCreateRequest) => clienteService.criar(dados),
+    onSuccess: (data) => {
+      // Invalidar cache de listas
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.estatisticas() });
+
+      // Adicionar ao cache individual
+      queryClient.setQueryData(CLIENTE_QUERY_KEYS.detail(data.data.id), data);
+
+      notifications.show({
+        title: 'Sucesso! 🎉',
+        message: 'Cliente criado com sucesso',
+        color: 'green',
+      });
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error || 'Erro ao criar cliente';
+      notifications.show({
+        title: 'Erro ❌',
+        message,
+        color: 'red',
+      });
     },
   });
+}
 
-  /**
-   * Atualizar cliente
-   */
-  const atualizarClienteMutation = useMutation({
-    mutationFn: ({ id, request }: { id: string; request: AtualizarClienteRequest }) =>
-      clienteService.atualizar(id, request),
-    onSuccess: (clienteAtualizado) => {
-      // Atualiza o cache do cliente específico
-      queryClient.setQueryData(QUERY_KEYS.cliente(clienteAtualizado.id), clienteAtualizado);
-      
-      // Invalida a lista de clientes
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.clientes });
+/**
+ * Hook para atualizar cliente
+ */
+export function useUpdateCliente() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, dados }: { id: string; dados: ClienteCreateRequest }) =>
+      clienteService.atualizar(id, dados),
+    onSuccess: (data, variables) => {
+      // Invalidar cache de listas
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.estatisticas() });
+
+      // Atualizar cache individual
+      queryClient.setQueryData(CLIENTE_QUERY_KEYS.detail(variables.id), data);
+
+      notifications.show({
+        title: 'Sucesso! ✅',
+        message: 'Cliente atualizado com sucesso',
+        color: 'green',
+      });
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error || 'Erro ao atualizar cliente';
+      notifications.show({
+        title: 'Erro ❌',
+        message,
+        color: 'red',
+      });
     },
   });
+}
 
-  /**
-   * Remover cliente
-   */
-  const removerClienteMutation = useMutation({
+/**
+ * Hook para remover cliente (soft delete)
+ */
+export function useDeleteCliente() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
     mutationFn: ({ id, motivo }: { id: string; motivo?: string }) =>
       clienteService.remover(id, motivo),
-    onSuccess: (_, variables) => {
-      // Remove do cache
-      queryClient.removeQueries({ queryKey: QUERY_KEYS.cliente(variables.id) });
-      
-      // Invalida a lista
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.clientes });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.clientesEstatisticas });
+    onSuccess: () => {
+      // Invalidar cache de listas e estatísticas
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.estatisticas() });
+
+      notifications.show({
+        title: 'Cliente Removido 🗑️',
+        message: 'Cliente removido com sucesso',
+        color: 'orange',
+      });
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error || 'Erro ao remover cliente';
+      notifications.show({
+        title: 'Erro ❌',
+        message,
+        color: 'red',
+      });
     },
   });
-
-  // === ACTIONS ===
-
-  /**
-   * Cria um novo cliente
-   */
-  const criarCliente = useCallback(async (request: CriarClienteRequest, ip?: string) => {
-    return criarClienteMutation.mutateAsync({ request, ip });
-  }, [criarClienteMutation]);
-
-  /**
-   * Atualiza um cliente
-   */
-  const atualizarCliente = useCallback(async (id: string, request: AtualizarClienteRequest) => {
-    return atualizarClienteMutation.mutateAsync({ id, request });
-  }, [atualizarClienteMutation]);
-
-  /**
-   * Remove um cliente
-   */
-  const removerCliente = useCallback(async (id: string, motivo?: string) => {
-    return removerClienteMutation.mutateAsync({ id, motivo });
-  }, [removerClienteMutation]);
-
-  /**
-   * Atualiza filtros de busca
-   */
-  const atualizarFiltros = useCallback((novosFiltros: Partial<BuscarClienteRequest>) => {
-    setFiltros(prev => ({ ...prev, ...novosFiltros }));
-  }, []);
-
-  /**
-   * Vai para uma página específica
-   */
-  const irParaPagina = useCallback((pagina: number) => {
-    setFiltros(prev => ({ ...prev, pagina }));
-  }, []);
-
-  /**
-   * Muda o tamanho da página
-   */
-  const mudarTamanhoPagina = useCallback((tamanhoPagina: number) => {
-    setFiltros(prev => ({ ...prev, tamanhoPagina, pagina: 1 }));
-  }, []);
-
-  /**
-   * Reseta filtros para o padrão
-   */
-  const resetarFiltros = useCallback(() => {
-    setFiltros({
-      pagina: 1,
-      tamanhoPagina: 20,
-      direcaoOrdenacao: 'DESC',
-      ordenarPor: 'DataCadastro',
-      apenasAtivos: true
-    });
-  }, []);
-
-  return {
-    // Dados
-    clientes: clientes?.items || [],
-    totalClientes: clientes?.totalItems || 0,
-    totalPaginas: clientes?.totalPages || 0,
-    paginaAtual: clientes?.currentPage || 1,
-    tamanhoPagina: clientes?.pageSize || 20,
-    temProxima: clientes?.hasNext || false,
-    temAnterior: clientes?.hasPrevious || false,
-    estatisticas,
-    filtros,
-
-    // Estados
-    carregandoClientes,
-    carregandoEstatisticas,
-    criandoCliente: criarClienteMutation.isPending,
-    atualizandoCliente: atualizarClienteMutation.isPending,
-    removendoCliente: removerClienteMutation.isPending,
-
-    // Erros
-    erroClientes,
-    erroCriarCliente: criarClienteMutation.error,
-    erroAtualizarCliente: atualizarClienteMutation.error,
-    erroRemoverCliente: removerClienteMutation.error,
-
-    // Ações
-    criarCliente,
-    atualizarCliente,
-    removerCliente,
-    atualizarFiltros,
-    irParaPagina,
-    mudarTamanhoPagina,
-    resetarFiltros,
-    recarregarClientes,
-
-    // Reset mutations
-    resetCriarCliente: criarClienteMutation.reset,
-    resetAtualizarCliente: atualizarClienteMutation.reset,
-    resetRemoverCliente: removerClienteMutation.reset,
-  };
-};
+}
 
 /**
- * Hook para obter um cliente específico
+ * Hook para restaurar cliente
  */
-export const useCliente = (id: string, enabled: boolean = true) => {
+export function useRestoreCliente() {
   const queryClient = useQueryClient();
 
-  const {
-    data: cliente,
-    isLoading: carregandoCliente,
-    error: erroCliente,
-    refetch: recarregarCliente
-  } = useQuery({
-    queryKey: QUERY_KEYS.cliente(id),
-    queryFn: () => clienteService.obterPorId(id),
-    enabled: enabled && !!id,
-    staleTime: 300000, // 5 minutos
-  });
+  return useMutation({
+    mutationFn: (id: string) => clienteService.restaurar(id),
+    onSuccess: () => {
+      // Invalidar cache
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.estatisticas() });
 
-  return {
-    cliente,
-    carregandoCliente,
-    erroCliente,
-    recarregarCliente,
-  };
-};
+      notifications.show({
+        title: 'Cliente Restaurado ↩️',
+        message: 'Cliente restaurado com sucesso',
+        color: 'blue',
+      });
+    },
+    onError: (error: any) => {
+      const message = error.response?.data?.error || 'Erro ao restaurar cliente';
+      notifications.show({
+        title: 'Erro ❌',
+        message,
+        color: 'red',
+      });
+    },
+  });
+}
 
 /**
- * Hook para buscar clientes por termo
+ * Hook otimizado para busca com debounce
  */
-export const useBuscarClientes = (termo: string, limite: number = 20) => {
-  const {
-    data: resultados,
-    isLoading: buscando,
-    error: erroBusca
-  } = useQuery({
-    queryKey: QUERY_KEYS.clientesPorTermo(termo),
-    queryFn: () => clienteService.buscarPorTermo(termo, limite),
-    enabled: termo.length >= 2,
-    staleTime: 60000, // 1 minuto
-  });
+export function useClientesSearch(search: string, delay = 500) {
+  const [debouncedSearch, setDebouncedSearch] = useState(search);
 
-  return {
-    resultados: resultados || [],
-    buscando,
-    erroBusca,
-  };
-};
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, delay);
+
+    return () => clearTimeout(timer);
+  }, [search, delay]);
+
+  return useClientes({
+    search: debouncedSearch,
+    limit: 20
+  });
+}
+
+// Importar useState e useEffect para o hook de busca
+import { useState, useEffect } from 'react';
 
 /**
- * Hook para verificar se CPF já existe
+ * Hook para operações em lote
  */
-export const useVerificarCpf = () => {
-  const verificarCpfMutation = useMutation({
-    mutationFn: ({ cpf, excluirId }: { cpf: string; excluirId?: string }) =>
-      clienteService.cpfJaExiste(cpf, excluirId),
-  });
+export function useBatchClienteOperations() {
+  const queryClient = useQueryClient();
+  const deleteCliente = useDeleteCliente();
+  const restoreCliente = useRestoreCliente();
+
+  const deleteBatch = async (ids: string[], motivo?: string) => {
+    const promises = ids.map(id => clienteService.remover(id, motivo));
+
+    try {
+      await Promise.all(promises);
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.estatisticas() });
+
+      notifications.show({
+        title: 'Operação Concluída 📦',
+        message: `${ids.length} clientes removidos`,
+        color: 'orange',
+      });
+    } catch (error) {
+      notifications.show({
+        title: 'Erro na Operação ❌',
+        message: 'Alguns clientes não puderam ser removidos',
+        color: 'red',
+      });
+    }
+  };
+
+  const restoreBatch = async (ids: string[]) => {
+    const promises = ids.map(id => clienteService.restaurar(id));
+
+    try {
+      await Promise.all(promises);
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.lists() });
+      queryClient.invalidateQueries({ queryKey: CLIENTE_QUERY_KEYS.estatisticas() });
+
+      notifications.show({
+        title: 'Operação Concluída ↩️',
+        message: `${ids.length} clientes restaurados`,
+        color: 'blue',
+      });
+    } catch (error) {
+      notifications.show({
+        title: 'Erro na Operação ❌',
+        message: 'Alguns clientes não puderam ser restaurados',
+        color: 'red',
+      });
+    }
+  };
 
   return {
-    verificarCpf: verificarCpfMutation.mutateAsync,
-    verificandoCpf: verificarCpfMutation.isPending,
-    erroVerificarCpf: verificarCpfMutation.error,
+    deleteBatch,
+    restoreBatch,
+    isDeleting: deleteCliente.isPending,
+    isRestoring: restoreCliente.isPending,
   };
-};
-
-/**
- * Hook para verificar se email já existe
- */
-export const useVerificarEmail = () => {
-  const verificarEmailMutation = useMutation({
-    mutationFn: ({ email, excluirId }: { email: string; excluirId?: string }) =>
-      clienteService.emailJaExiste(email, excluirId),
-  });
-
-  return {
-    verificarEmail: verificarEmailMutation.mutateAsync,
-    verificandoEmail: verificarEmailMutation.isPending,
-    erroVerificarEmail: verificarEmailMutation.error,
-  };
-};
-
-/**
- * Hook para histórico do cliente
- */
-export const useClienteHistorico = (clienteId: string, request: HistoricoClienteRequest) => {
-  const {
-    data: historico,
-    isLoading: carregandoHistorico,
-    error: erroHistorico
-  } = useQuery({
-    queryKey: [...QUERY_KEYS.clienteHistorico(clienteId), request],
-    queryFn: () => clienteService.obterHistorico(clienteId, request),
-    enabled: !!clienteId,
-    staleTime: 300000, // 5 minutos
-  });
-
-  return {
-    historico,
-    carregandoHistorico,
-    erroHistorico,
-  };
-};
+}

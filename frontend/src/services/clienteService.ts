@@ -1,368 +1,194 @@
 /**
- * Service para comunicação com API de Clientes Brasileiros
- * Usa APENAS dados reais da base de dados via API
+ * Cliente Service - Operações CRUD completas
+ * Conecta frontend Next.js com API Express.js + Prisma
  */
-import { api } from './api';
-import {
-  Cliente,
-  ClienteResumo,
-  CriarClienteRequest,
-  AtualizarClienteRequest,
-  BuscarClienteRequest,
-  PagedResult,
-  EnderecoViaCep,
-  BuscarCepRequest,
-  BuscarEnderecoRequest,
-  CpfValidationResult,
-  TelefoneValidationResult,
-  CepValidationResult,
-  DireitoEsquecimentoRequest,
-  ClienteLgpd,
-  ClienteEstatisticas,
-  ClienteHistorico,
-  HistoricoClienteRequest
-} from '../types/cliente';
+import { api } from '@/lib/api';
 
-const BASE_URL = '/clientes';
+// Interfaces TypeScript baseadas no backend
+export interface Cliente {
+  id: string;
+  nome: string;
+  sobrenome: string;
+  cpf?: string | null;
+  dataNascimento?: string | null;
+  ativo: boolean;
+  dataCadastro: string;
+  dataUltimaAtualizacao: string;
+  tenantId: string;
+}
 
-export const clienteService = {
-  // === CRUD BÁSICO ===
-  
-  /**
-   * Lista clientes com paginação e filtros
-   */
-  async listar(request: BuscarClienteRequest): Promise<PagedResult<ClienteResumo>> {
-    try {
-      console.log('📊 Buscando clientes da API real:', request);
-      const response = await api.get(`${BASE_URL}`, { params: request });
-      console.log('✅ Clientes obtidos da API:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('❌ Erro ao buscar clientes da API:', error);
-      throw error;
-    }
-  },
+export interface ClienteCreateRequest {
+  nome: string;
+  sobrenome: string;
+  cpf?: string;
+  dataNascimento?: string;
+}
 
-  /**
-   * Obtém um cliente por ID
-   */
-  async obterPorId(id: string): Promise<Cliente> {
-    try {
-      console.log(`📋 Buscando cliente ${id} da API real`);
-      const response = await api.get(`${BASE_URL}/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error(`❌ Erro ao buscar cliente ${id}:`, error);
-      throw error;
-    }
-  },
+export interface ClienteUpdateRequest extends ClienteCreateRequest {
+  id: string;
+}
 
-  /**
-   * Cria um novo cliente
-   */
-  async criar(request: CriarClienteRequest, ipOrigem?: string): Promise<Cliente> {
-    try {
-      console.log('✨ Criando novo cliente via API real');
-      const headers = ipOrigem ? { 'X-Client-IP': ipOrigem } : {};
-      const response = await api.post(`${BASE_URL}`, request, { headers });
-      return response.data;
-    } catch (error) {
-      console.error('❌ Erro ao criar cliente:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Atualiza um cliente existente
-   */
-  async atualizar(id: string, request: AtualizarClienteRequest): Promise<Cliente> {
-    try {
-      console.log(`🔄 Atualizando cliente ${id} via API real`);
-      const response = await api.put(`${BASE_URL}/${id}`, request);
-      return response.data;
-    } catch (error) {
-      console.error(`❌ Erro ao atualizar cliente ${id}:`, error);
-      throw error;
-    }
-  },
-
-  /**
-   * Remove um cliente (soft delete)
-   */
-  async remover(id: string, motivo?: string): Promise<boolean> {
-    try {
-      console.log(`🗑️ Removendo cliente ${id} via API real`);
-      const params = motivo ? { motivo } : {};
-      const response = await api.delete(`${BASE_URL}/${id}`, { params });
-      return response.data;
-    } catch (error) {
-      console.error(`❌ Erro ao remover cliente ${id}:`, error);
-      throw error;
-    }
-  },
-
-  // === BUSCA AVANÇADA ===
-
-  /**
-   * Busca clientes por termo geral
-   */
-  async buscarPorTermo(termo: string, limite: number = 20): Promise<ClienteResumo[]> {
-    const request: BuscarClienteRequest = { 
-      termo, 
-      tamanhoPagina: limite,
-      pagina: 1,
-      direcaoOrdenacao: 'ASC'
+export interface ClienteListResponse {
+  success: boolean;
+  data: {
+    items: Cliente[];
+    pagination: {
+      currentPage: number;
+      totalPages: number;
+      totalItems: number;
+      itemsPerPage: number;
+      hasNext: boolean;
+      hasPrevious: boolean;
     };
-    const result = await this.listar(request);
-    return result.items;
-  },
+  };
+}
+
+export interface ClienteResponse {
+  success: boolean;
+  data: Cliente;
+  message?: string;
+}
+
+export interface ClienteEstatisticas {
+  total: number;
+  ativos: number;
+  inativos: number;
+  comCpf: number;
+  semCpf: number;
+  novosMes: number;
+}
+
+export interface ClienteEstatisticasResponse {
+  success: boolean;
+  data: ClienteEstatisticas;
+}
+
+// Parâmetros de busca
+export interface ClienteQueryParams {
+  page?: number;
+  limit?: number;
+  search?: string;
+  ativo?: boolean;
+}
+
+/**
+ * Classe ClienteService - Todas operações de cliente
+ */
+export class ClienteService {
+  private baseUrl = '/clientes';
 
   /**
-   * Busca cliente por CPF
+   * Listar clientes com paginação e filtros
    */
-  async buscarPorCpf(cpf: string): Promise<Cliente | null> {
-    try {
-      const response = await api.get(`${BASE_URL}/cpf/${encodeURIComponent(cpf)}`);
-      return response.data;
-    } catch (error: any) {
-      if (error.response?.status === 404) {
-        return null;
-      }
-      throw error;
-    }
-  },
+  async listar(params: ClienteQueryParams = {}): Promise<ClienteListResponse> {
+    const queryParams = new URLSearchParams();
 
-  /**
-   * Verifica se CPF já existe
-   */
-  async cpfJaExiste(cpf: string, excluirId?: string): Promise<boolean> {
-    try {
-      const params = excluirId ? { excluirId } : {};
-      const response = await api.get(`${BASE_URL}/cpf/${encodeURIComponent(cpf)}/exists`, { params });
-      return response.data;
-    } catch (error) {
-      console.error('❌ Erro ao verificar CPF:', error);
-      return false;
-    }
-  },
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.search) queryParams.append('search', params.search);
+    if (params.ativo !== undefined) queryParams.append('ativo', params.ativo.toString());
 
-  /**
-   * Verifica se email já existe
-   */
-  async emailJaExiste(email: string, excluirId?: string): Promise<boolean> {
-    try {
-      const params = excluirId ? { excluirId } : {};
-      const response = await api.get(`${BASE_URL}/email/${encodeURIComponent(email)}/exists`, { params });
-      return response.data;
-    } catch (error) {
-      console.error('❌ Erro ao verificar email:', error);
-      return false;
-    }
-  },
-
-  // === VALIDAÇÕES ===
-
-  /**
-   * Valida CPF
-   */
-  async validarCpf(cpf: string): Promise<CpfValidationResult> {
-    const response = await api.post(`${BASE_URL}/validar/cpf`, { cpf });
+    const response = await api.get(`${this.baseUrl}?${queryParams}`);
     return response.data;
-  },
+  }
 
   /**
-   * Valida telefone
+   * Obter cliente por ID
    */
-  async validarTelefone(telefone: string): Promise<TelefoneValidationResult> {
-    const response = await api.post(`${BASE_URL}/validar/telefone`, { telefone });
+  async obterPorId(id: string): Promise<ClienteResponse> {
+    const response = await api.get(`${this.baseUrl}/${id}`);
     return response.data;
-  },
+  }
 
   /**
-   * Valida CEP e consulta endereço
+   * Criar novo cliente
    */
-  async validarCep(cep: string): Promise<CepValidationResult> {
-    const response = await api.post(`${BASE_URL}/validar/cep`, { cep });
+  async criar(dados: ClienteCreateRequest): Promise<ClienteResponse> {
+    const response = await api.post(this.baseUrl, dados);
     return response.data;
-  },
+  }
 
   /**
-   * Busca endereço por CEP via ViaCEP
+   * Atualizar cliente existente
    */
-  async buscarEnderecoPorCep(request: BuscarCepRequest): Promise<EnderecoViaCep> {
-    const response = await api.post(`${BASE_URL}/endereco/cep`, request);
+  async atualizar(id: string, dados: ClienteCreateRequest): Promise<ClienteResponse> {
+    const response = await api.put(`${this.baseUrl}/${id}`, dados);
     return response.data;
-  },
+  }
 
   /**
-   * Busca CEPs por endereço (busca reversa)
+   * Remover cliente (soft delete)
    */
-  async buscarCepPorEndereco(request: BuscarEnderecoRequest): Promise<EnderecoViaCep[]> {
-    const response = await api.post(`${BASE_URL}/endereco/buscar`, request);
-    return response.data;
-  },
-
-  // === BUSINESS LOGIC ===
-
-  /**
-   * Atualiza dados comerciais após compra
-   */
-  async atualizarDadosComerciais(clienteId: string, valorCompra: number): Promise<Cliente> {
-    const response = await api.post(`${BASE_URL}/${clienteId}/comercial`, { valorCompra });
-    return response.data;
-  },
-
-  /**
-   * Calcula desconto aplicável para o cliente
-   */
-  async calcularDesconto(clienteId: string, valorCompra: number): Promise<number> {
-    const response = await api.get(`${BASE_URL}/${clienteId}/desconto`, {
-      params: { valorCompra }
-    });
-    return response.data;
-  },
-
-  /**
-   * Obtém histórico do cliente
-   */
-  async obterHistorico(clienteId: string, request: HistoricoClienteRequest): Promise<ClienteHistorico> {
-    const response = await api.post(`${BASE_URL}/${clienteId}/historico`, request);
-    return response.data;
-  },
-
-  // === LGPD COMPLIANCE ===
-
-  /**
-   * Registra consentimento LGPD
-   */
-  async registrarConsentimento(
-    clienteId: string,
-    ip: string,
-    finalidade: string,
-    marketing: boolean = false,
-    compartilhamento: boolean = false
-  ): Promise<Cliente> {
-    const response = await api.post(`${BASE_URL}/${clienteId}/lgpd/consentimento`, {
-      ip,
-      finalidade,
-      marketing,
-      compartilhamento
-    });
-    return response.data;
-  },
-
-  /**
-   * Processa direito ao esquecimento
-   */
-  async processarDireitoEsquecimento(
-    clienteId: string,
-    request: DireitoEsquecimentoRequest
-  ): Promise<boolean> {
-    const response = await api.post(`${BASE_URL}/${clienteId}/lgpd/esquecimento`, request);
-    return response.data;
-  },
-
-  /**
-   * Obtém relatório LGPD do cliente
-   */
-  async obterRelatorioLgpd(clienteId: string): Promise<ClienteLgpd> {
-    const response = await api.get(`${BASE_URL}/${clienteId}/lgpd/relatorio`);
-    return response.data;
-  },
-
-  // === ESTATÍSTICAS E RELATÓRIOS ===
-
-  /**
-   * Obtém estatísticas gerais dos clientes
-   */
-  async obterEstatisticas(): Promise<ClienteEstatisticas> {
-    try {
-      console.log('📈 Buscando estatísticas da API real');
-      const response = await api.get(`${BASE_URL}/estatisticas`);
-      return response.data;
-    } catch (error) {
-      console.error('❌ Erro ao buscar estatísticas:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Exporta clientes para diferentes formatos
-   */
-  async exportarClientes(
-    request: BuscarClienteRequest,
-    formato: 'CSV' | 'Excel' | 'PDF' = 'CSV'
-  ): Promise<Blob> {
-    const response = await api.post(`${BASE_URL}/exportar`, request, {
-      params: { formato },
-      responseType: 'blob'
+  async remover(id: string, motivo?: string): Promise<{ success: boolean; message: string }> {
+    const response = await api.delete(`${this.baseUrl}/${id}`, {
+      data: { motivo }
     });
     return response.data;
   }
-};
 
-// === UTILITY FUNCTIONS ===
+  /**
+   * Restaurar cliente removido
+   */
+  async restaurar(id: string): Promise<{ success: boolean; message: string }> {
+    const response = await api.put(`${this.baseUrl}/${id}/restaurar`);
+    return response.data;
+  }
 
-/**
- * Formata CPF para exibição
- */
+  /**
+   * Buscar cliente por CPF
+   */
+  async buscarPorCpf(cpf: string): Promise<ClienteResponse> {
+    const response = await api.get(`${this.baseUrl}/cpf/${cpf}`);
+    return response.data;
+  }
+
+  /**
+   * Buscar clientes por faixa etária
+   */
+  async buscarPorIdade(idadeMin: number, idadeMax: number): Promise<ClienteListResponse> {
+    const response = await api.get(`${this.baseUrl}/idade/${idadeMin}/${idadeMax}`);
+    return { success: true, data: { items: response.data.data, pagination: {} as any } };
+  }
+
+  /**
+   * Obter estatísticas de clientes
+   */
+  async obterEstatisticas(): Promise<ClienteEstatisticasResponse> {
+    const response = await api.get(`${this.baseUrl}/estatisticas`);
+    return response.data;
+  }
+}
+
+// Instância singleton para uso em toda aplicação
+export const clienteService = new ClienteService();
+
+// Funções utilitárias para formatação
 export const formatarCpf = (cpf: string): string => {
-  const cleanCpf = cpf.replace(/\D/g, '');
-  if (cleanCpf.length === 11) {
-    return cleanCpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  const cleaned = cpf.replace(/\D/g, '');
+  return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+};
+
+export const validarCpf = (cpf: string): boolean => {
+  const cleaned = cpf.replace(/\D/g, '');
+  if (cleaned.length !== 11 || /^(\d)\1+$/.test(cleaned)) return false;
+
+  let soma = 0;
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cleaned[i]) * (10 - i);
   }
-  return cpf;
-};
+  let digito = 11 - (soma % 11);
+  if (digito >= 10) digito = 0;
+  if (parseInt(cleaned[9]) !== digito) return false;
 
-/**
- * Limpa CPF removendo formatação
- */
-export const limparCpf = (cpf: string): string => {
-  return cpf.replace(/\D/g, '');
-};
-
-/**
- * Formata telefone brasileiro
- */
-export const formatarTelefone = (telefone: string): string => {
-  const cleanPhone = telefone.replace(/\D/g, '');
-  
-  if (cleanPhone.length === 11) {
-    return cleanPhone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-  } else if (cleanPhone.length === 10) {
-    return cleanPhone.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  soma = 0;
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cleaned[i]) * (11 - i);
   }
-  
-  return telefone;
+  digito = 11 - (soma % 11);
+  if (digito >= 10) digito = 0;
+  return parseInt(cleaned[10]) === digito;
 };
 
-/**
- * Formata CEP para exibição
- */
-export const formatarCep = (cep: string): string => {
-  const cleanCep = cep.replace(/\D/g, '');
-  if (cleanCep.length === 8) {
-    return cleanCep.replace(/(\d{5})(\d{3})/, '$1-$2');
-  }
-  return cep;
-};
-
-/**
- * Limpa CEP removendo formatação
- */
-export const limparCep = (cep: string): string => {
-  return cep.replace(/\D/g, '');
-};
-
-/**
- * Obtém IP do cliente (para LGPD)
- */
-export const obterIpCliente = async (): Promise<string> => {
-  try {
-    const response = await fetch('https://api.ipify.org?format=json');
-    const data = await response.json();
-    return data.ip;
-  } catch {
-    return 'unknown';
-  }
+export const formatarNomeCompleto = (cliente: Cliente): string => {
+  return `${cliente.nome} ${cliente.sobrenome}`;
 };

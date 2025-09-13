@@ -30,16 +30,17 @@ Sistema **SAAS multi-tenant brasileiro** com **arquitetura de verticais por comp
 
 ## 🛠️ Stack Tecnológica
 
-### Backend (.NET 9.0.1)
-- **Framework**: ASP.NET Core 9.0.1
-- **ORM**: Entity Framework Core 9.0.1
+### Backend (Express.js + TypeScript)
+- **Framework**: Express.js 4.19.x + TypeScript 5.3.x
+- **ORM**: Prisma 5.x
 - **Database**: PostgreSQL 17
 - **Architecture**: Verticais + SOLID + Clean Architecture
 - **Patterns**: Unit of Work + Repository + CQRS + Event Sourcing
 
 ### Frontend (React + Mantine)
 - **Framework**: React 18.3.x + TypeScript 5.3.x
-- **UI Library**: Mantine + Tailwind CSS 4+
+- **UI Library**: Mantine 7.0 + Tailwind CSS 4+
+- **State Management**: Zustand 4.5.0
 - **Design**: Cards modernos, contraste melhorado, tipografia legível
 - **Build**: Vite + TSDoc documentation
 
@@ -53,19 +54,29 @@ Sistema **SAAS multi-tenant brasileiro** com **arquitetura de verticais por comp
 
 ```
 coreapp-saas/
-├── backend/                    # ASP.NET Core 9.0.1
+├── backend/                    # Express.js + TypeScript
 │   ├── src/
-│   │   ├── CoreApp.Core/       # Módulos Starter
-│   │   ├── CoreApp.Modules/    # Módulos Adicionais
-│   │   ├── CoreApp.Shared/     # Multi-tenant + Security
-│   │   └── CoreApp.Api/        # Controllers + Program.cs
+│   │   ├── controllers/       # REST controllers
+│   │   ├── services/          # Lógica de negócio
+│   │   ├── models/           # Modelos de dados (Prisma)
+│   │   ├── middleware/       # Middlewares (auth, tenant, vertical)
+│   │   ├── routes/           # Definição de rotas
+│   │   ├── config/           # Configurações (DB, JWT, etc)
+│   │   ├── utils/            # Utilitários
+│   │   └── types/            # TypeScript types
+│   ├── prisma/               # Schema Prisma
+│   │   ├── schema.prisma
+│   │   └── migrations/
+│   ├── package.json
+│   └── tsconfig.json
 ├── frontend/                   # React + Mantine
 │   ├── src/
-│   │   ├── components/        # Componentes Mantine customizados
-│   │   ├── features/          # Features por módulo comercial
-│   │   ├── themes/            # Temas multi-tenant
-│   │   ├── hooks/             # Custom hooks tipados
-│   │   └── types/             # TypeScript definitions
+│   │   ├── components/        # Componentes Mantine 7
+│   │   ├── hooks/             # Custom hooks com useVerticalEntity
+│   │   ├── stores/            # Zustand para estado
+│   │   ├── pages/             # Páginas por vertical
+│   │   ├── services/          # API calls
+│   │   └── types/             # TypeScript types
 ├── traefik/                   # Reverse Proxy Multi-tenant
 └── scripts/                   # Scripts desenvolvimento/deploy
 ```
@@ -95,11 +106,20 @@ curl http://localhost:8080/health
 ### URLs de Desenvolvimento
 | Serviço | URL | Descrição |
 |---------|-----|-----------|
-| **API Backend** | http://localhost:8080/health | Health Check |
-| **Swagger UI** | http://localhost:8080/swagger | Documentação API |
+| **API Backend** | http://localhost:3001/health | Health Check |
+| **Frontend React** | http://localhost:3000 | Interface usuário |
+| **API Docs** | http://localhost:3001/api-docs | Documentação API |
+| **Prisma Studio** | http://localhost:5555 | Admin banco dados |
 | **PostgreSQL CoreApp** | localhost:5432 | Banco principal |
-| **PostgreSQL SonarQube** | localhost:5433 | Banco SonarQube |
 | **SonarQube** | http://localhost:9000 | Análise código (dev) |
+
+### 🌐 Links de Teste Online
+| Ambiente | URL | Status | Credenciais |
+|----------|-----|--------|-------------|
+| **Demo** | https://demo-coreapp.vercel.app | 🟢 Online | admin@demo.com / admin123 |
+| **Staging** | https://staging-coreapp.vercel.app | 🟡 Testing | gerente@demo.com / gerente123 |
+| **API Demo** | https://api-demo-coreapp.vercel.app | 🟢 Online | Bearer token via login |
+| **Prisma Studio** | https://studio-demo-coreapp.vercel.app | 🟢 Online | Somente leitura |
 
 ### Comandos Docker
 ```bash
@@ -145,15 +165,24 @@ echo "ENV=production" > .env && docker-compose up -d
 
 ### Comandos Essenciais
 ```bash
-# Backend .NET 9
+# Backend Express.js
 cd backend
-dotnet build -c Release
-dotnet test
+npm install
+npm run dev
+npm run build
+npm test
 
 # Frontend React + Mantine
 cd frontend
 npm install
-npm start
+npm run dev
+npm run build
+
+# Prisma
+cd backend
+npx prisma generate
+npx prisma db push
+npx prisma studio
 
 # Análise qualidade
 ./scripts/sonar-local.sh
@@ -176,9 +205,26 @@ npm start
 ## 🚢 Deploy Produção
 
 ### URLs Produção
-- **API**: https://api.seudominio.com.br
-- **Multi-tenant**: https://{tenant}.seudominio.com.br
-- **Admin**: https://admin.seudominio.com.br
+- **API**: https://api-coreapp.vercel.app
+- **Frontend**: https://app-coreapp.vercel.app
+- **Multi-tenant**: https://{tenant}.coreapp.com.br
+- **Admin**: https://admin.coreapp.com.br
+
+### 🧪 Endpoints de Teste
+```bash
+# Health Check
+curl https://api-demo-coreapp.vercel.app/health
+
+# Login Demo
+curl -X POST https://api-demo-coreapp.vercel.app/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@demo.com","password":"admin123"}'
+
+# Listar Produtos (Demo)
+curl https://api-demo-coreapp.vercel.app/api/produtos \
+  -H "x-tenant-id: demo" \
+  -H "Authorization: Bearer {seu-token}"
+```
 
 ### Deploy Automático
 - **Branch**: `develop-csharp` → Deploy automático
