@@ -1,6 +1,8 @@
-# CoreApp - Sistema SAAS Multi-tenant (.NET 9)
+# CoreApp - Sistema SAAS Multi-tenant (Express.js + Next.js)
 
-![.NET](https://img.shields.io/badge/.NET-9.0-purple.svg)
+![Node.js](https://img.shields.io/badge/Node.js-20.x-green.svg)
+![Express.js](https://img.shields.io/badge/Express.js-4.19-blue.svg)
+![Next.js](https://img.shields.io/badge/Next.js-15.5-black.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-blue.svg)
 ![Docker](https://img.shields.io/badge/Docker-ready-brightgreen.svg)
 ![Brasil](https://img.shields.io/badge/🇧🇷-100%25%20Brasileiro-green.svg)
@@ -32,86 +34,102 @@ Sistema **SAAS multi-tenant brasileiro** com **arquitetura de verticais por comp
 
 ### Backend (Express.js + TypeScript)
 - **Framework**: Express.js 4.19.x + TypeScript 5.3.x
-- **ORM**: Prisma 5.x
-- **Database**: PostgreSQL 17
+- **ORM**: Prisma 5.x + PostgreSQL 17
+- **Database**: PostgreSQL 17 multi-tenant
 - **Architecture**: Verticais + SOLID + Clean Architecture
-- **Patterns**: Unit of Work + Repository + CQRS + Event Sourcing
+- **Patterns**: Unit of Work + Repository + CQRS
+- **Auth**: JWT + Role-based + Multi-tenant
+- **Docs**: Swagger UI completo + OpenAPI 3.0
 
-### Frontend (React + Mantine)
-- **Framework**: React 18.3.x + TypeScript 5.3.x
-- **UI Library**: Mantine 7.0 + Tailwind CSS 4+
+### Frontend (Next.js + Mantine)
+- **Framework**: Next.js 15.5.x + React 19.x + TypeScript 5.3.x
+- **UI Library**: Mantine 7.15 + Tailwind CSS 4+
 - **State Management**: Zustand 4.5.0
 - **Design**: Cards modernos, contraste melhorado, tipografia legível
-- **Build**: Vite + TSDoc documentation
+- **Build**: Turbopack + App Router + RSC
 
 ### Infraestrutura
 - **Containers**: Docker + Docker Compose
-- **Reverse Proxy**: Traefik v3.1 (roteamento multi-tenant)
-- **Cache**: IMemoryCache + Redis 7.2
-- **Message Queue**: RabbitMQ 3.13
+- **Database**: PostgreSQL 17 + Docker
+- **Cache**: Node Cache + Fallback resiliente
+- **Development**: Hot reload completo
 
 ## 📁 Estrutura do Projeto
 
 ```
-coreapp-saas/
-├── backend/                    # Express.js + TypeScript
+CoreApp-Vertical-Modular/
+├── backend/                    # Express.js + TypeScript + Prisma
 │   ├── src/
 │   │   ├── controllers/       # REST controllers
-│   │   ├── services/          # Lógica de negócio
-│   │   ├── models/           # Modelos de dados (Prisma)
-│   │   ├── middleware/       # Middlewares (auth, tenant, vertical)
-│   │   ├── routes/           # Definição de rotas
-│   │   ├── config/           # Configurações (DB, JWT, etc)
-│   │   ├── utils/            # Utilitários
-│   │   └── types/            # TypeScript types
-│   ├── prisma/               # Schema Prisma
-│   │   ├── schema.prisma
-│   │   └── migrations/
-│   ├── package.json
-│   └── tsconfig.json
-├── frontend/                   # React + Mantine
-│   ├── src/
-│   │   ├── components/        # Componentes Mantine 7
-│   │   ├── hooks/             # Custom hooks com useVerticalEntity
-│   │   ├── stores/            # Zustand para estado
-│   │   ├── pages/             # Páginas por vertical
-│   │   ├── services/          # API calls
+│   │   ├── services/          # Lógica de negócio + JWT + Auth
+│   │   ├── repositories/      # Repository pattern + Unit of Work
+│   │   ├── middleware/        # Auth + Tenant + Error handling
+│   │   ├── routes/            # Definição de rotas
+│   │   ├── config/            # Configurações (DB, JWT, Swagger)
+│   │   ├── patterns/          # CQRS + Design patterns
 │   │   └── types/             # TypeScript types
-├── traefik/                   # Reverse Proxy Multi-tenant
-└── scripts/                   # Scripts desenvolvimento/deploy
+│   ├── prisma/                # Schema Prisma + Migrations
+│   │   └── schema.prisma      # Multi-tenant + Soft delete + Auth
+│   ├── package.json           # Express.js + Prisma + JWT
+│   └── tsconfig.json
+├── frontend/                   # Next.js 15 + Mantine 7
+│   ├── src/
+│   │   ├── app/               # Next.js App Router
+│   │   ├── components/        # Componentes Mantine + Auth
+│   │   ├── hooks/             # Custom hooks + useAuth
+│   │   ├── stores/            # Zustand para estado
+│   │   ├── services/          # API calls + Auth service
+│   │   ├── lib/               # Utils + API client
+│   │   └── types/             # TypeScript types
+│   ├── package.json           # Next.js + Mantine + Zustand
+│   └── tsconfig.json
+├── docker-compose.yml         # PostgreSQL 17 + Services
+└── package.json               # Root workspace
 ```
 
 ## 🚀 Como Executar
 
 ### Pré-requisitos
+- Node.js 20.x+
 - Docker 20.10+ e Docker Compose v2.0+
 - Git
 
-### Execução Completa
+### Execução Desenvolvimento
 ```bash
 # Clonar repositório
 git clone <url-do-repositorio>
-cd coreapp
+cd CoreApp-Vertical-Modular
 
-# Configurar ambiente (development por padrão)
-echo "ENV=development" > .env
+# Instalar dependências
+npm install
+cd backend && npm install
+cd ../frontend && npm install
+cd ..
 
-# Deploy completo
-docker-compose up -d
+# Iniciar PostgreSQL
+docker-compose up -d postgres
 
-# Verificar saúde
-curl http://localhost:8080/health
+# Configurar banco de dados
+cd backend
+npx prisma db push
+npx prisma db seed
+
+# Executar desenvolvimento (paralelo)
+# Terminal 1: Backend
+cd backend && npm run dev
+
+# Terminal 2: Frontend
+cd frontend && npm run dev
 ```
 
 ### URLs de Desenvolvimento
 | Serviço | URL | Descrição |
 |---------|-----|-----------|
-| **API Backend** | http://localhost:3001/health | Health Check |
-| **Frontend React** | http://localhost:3000 | Interface usuário |
-| **API Docs** | http://localhost:3001/api-docs | Documentação API |
+| **API Backend** | http://localhost:5000/health | Health Check Express.js |
+| **Frontend Next.js** | http://localhost:3000 | Interface usuário |
+| **API Docs** | http://localhost:5000/api/docs | Swagger UI completo |
 | **Prisma Studio** | http://localhost:5555 | Admin banco dados |
 | **PostgreSQL CoreApp** | localhost:5432 | Banco principal |
-| **SonarQube** | http://localhost:9000 | Análise código (dev) |
 
 ### 🌐 Links de Teste Online
 | Ambiente | URL | Status | Credenciais |
@@ -121,28 +139,30 @@ curl http://localhost:8080/health
 | **API Demo** | https://api-demo-coreapp.vercel.app | 🟢 Online | Bearer token via login |
 | **Prisma Studio** | https://studio-demo-coreapp.vercel.app | 🟢 Online | Somente leitura |
 
-### Comandos Docker
+### Comandos Desenvolvimento
 ```bash
-# Iniciar sistema (produção/staging)
-docker-compose up -d
+# Backend Express.js
+cd backend
+npm install
+npm run dev
+npm run build
+npm test
 
-# Iniciar sistema + SonarQube (desenvolvimento)
-docker-compose --profile development up -d
+# Frontend Next.js
+cd frontend
+npm install
+npm run dev
+npm run build
 
-# Parar sistema
+# Banco de dados Prisma
+cd backend
+npx prisma generate
+npx prisma db push
+npx prisma studio
+
+# PostgreSQL via Docker
+docker-compose up -d postgres
 docker-compose down
-
-# Rebuild completo
-docker-compose up -d --build --force-recreate
-
-# Ver logs
-docker-compose logs -f coreapp
-
-# SonarQube (apenas desenvolvimento)
-./scripts/sonar-dev.sh
-
-# Trocar para produção
-echo "ENV=production" > .env && docker-compose up -d
 ```
 
 ## 🔐 Credenciais Demo
@@ -165,27 +185,26 @@ echo "ENV=production" > .env && docker-compose up -d
 
 ### Comandos Essenciais
 ```bash
-# Backend Express.js
+# Backend Express.js + TypeScript + Prisma
 cd backend
 npm install
-npm run dev
-npm run build
-npm test
+npm run dev          # Desenvolvimento com hot reload
+npm run build        # Compilar TypeScript
+npm run start        # Produção
+npm run db:push      # Sincronizar schema Prisma
+npm run db:seed      # Popular dados demo
+npm run db:studio    # Interface admin Prisma
 
-# Frontend React + Mantine
+# Frontend Next.js + Mantine
 cd frontend
 npm install
-npm run dev
-npm run build
+npm run dev          # Desenvolvimento com Turbopack
+npm run build        # Build produção
+npm run start        # Produção
 
-# Prisma
-cd backend
-npx prisma generate
-npx prisma db push
-npx prisma studio
-
-# Análise qualidade
-./scripts/sonar-local.sh
+# Desenvolvimento Completo (Paralelo)
+# Terminal 1: cd backend && npm run dev
+# Terminal 2: cd frontend && npm run dev
 ```
 
 ### Quality Gates
@@ -213,23 +232,26 @@ npx prisma studio
 ### 🧪 Endpoints de Teste
 ```bash
 # Health Check
-curl https://api-demo-coreapp.vercel.app/health
+curl http://localhost:5000/health
 
-# Login Demo
-curl -X POST https://api-demo-coreapp.vercel.app/auth/login \
+# Login Demo (Super Admin)
+curl -X POST http://localhost:5000/api/auth/super-admin/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@demo.com","password":"admin123"}'
+  -d '{"login":"SA00001A","senha":"A1234B"}'
 
-# Listar Produtos (Demo)
-curl https://api-demo-coreapp.vercel.app/api/produtos \
-  -H "x-tenant-id: demo" \
+# Listar Clientes (Demo)
+curl http://localhost:5000/api/clientes \
+  -H "X-Tenant-ID: demo" \
   -H "Authorization: Bearer {seu-token}"
+
+# Documentação Swagger UI
+# Acesse: http://localhost:5000/api/docs
 ```
 
 ### Deploy Automático
-- **Branch**: `develop-csharp` → Deploy automático
-- **Platform**: Dokploy + Traefik + PostgreSQL 17
-- **Configuração**: Via variável ENV=production
+- **Branch**: `develop` → Deploy automático
+- **Platform**: Vercel (Frontend) + Railway/Render (Backend)
+- **Database**: PostgreSQL 17 via Docker ou PaaS
 
 ## 🏛️ Compliance Brasileiro
 
@@ -261,7 +283,7 @@ curl https://api-demo-coreapp.vercel.app/api/produtos \
 
 **Sistema SAAS que revoluciona a gestão comercial brasileira com tecnologia de ponta e compliance total.**
 
-*CoreApp v3.0 - .NET 9 + React Admin*
+*CoreApp v4.0 - Express.js + Next.js*
 
 ---
 
