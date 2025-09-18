@@ -266,11 +266,6 @@ curl http://localhost:5000/api/clientes \
 - **Produção**: https://app.seudominio.com.br
 
 ---
-
-## 🇧🇷 Desenvolvido com ❤️ para o Brasil
-
-**Sistema SAAS que revoluciona a gestão comercial brasileira com tecnologia de ponta e compliance total.**
-
 *CoreApp v4.0 - Express.js + Next.js*
 
 ---
