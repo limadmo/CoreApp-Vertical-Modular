@@ -260,18 +260,6 @@ curl http://localhost:5000/api/clientes \
 - **Receita Federal**: NFCe automática
 - **Código Defesa Consumidor**: Compliance comercial
 
-### Pagamentos Nacionais
-- **PIX**: Pagamentos instantâneos
-- **Boleto**: Tradicional brasileiro
-- **Mercado Pago**: Gateway principal
-- **PagSeguro**: Gateway backup
-
-## 📞 Suporte
-
-### Canais
-- **Email**: suporte@coreapp.com.br
-- **WhatsApp**: Suporte comercial
-- **GitHub**: Issues técnicas
 
 ### Ambientes
 - **Desenvolvimento**: http://localhost
@@ -290,5 +278,5 @@ curl http://localhost:5000/api/clientes \
 ## 📋 Licença
 
 **© 2024 CoreApp SAAS**  
-Software proprietário. Desenvolvido no Brasil para comércios brasileiros.  
-Dados processados em território nacional (LGPD).
+Software proprietário.  
+Dados processados em território nacional (LGPD)
